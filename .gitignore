@@ -1,0 +1,49 @@
+CLAUDE.md
+.vercel
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.eggs/
+.Python
+env/
+venv/
+ENV/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build/Dist
+dist/
+build/
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+test_*.html
+test_*.js
+*.test.js
+
+# Cache
+.cache/
+.parcel-cache
+
+# Temporary files
+temp/
+tmp/
