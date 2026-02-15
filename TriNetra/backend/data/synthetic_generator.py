@@ -49,6 +49,15 @@ class TriNetraDataGenerator:
             )
         ''')
         
+        # Account risk scores table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS account_risk_scores (
+                account_id TEXT PRIMARY KEY,
+                risk_score REAL,
+                last_updated TEXT
+            )
+        ''')
+        
         conn.commit()
         conn.close()
     
