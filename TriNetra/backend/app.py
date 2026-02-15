@@ -46,10 +46,17 @@ if __name__ == '__main__':
     app = create_app()
     
     # Initialize database on first run
-    init_database()
+    try:
+        init_database()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Database initialization warning: {e}")
     
     print("🔹 TriNetra Backend Starting...")
     print(f"🔹 Server running at: http://localhost:{Config.PORT}")
+    print("🔹 API endpoints:")
+    print(f"🔹   - Health: http://localhost:{Config.PORT}/api/health")
+    print(f"🔹   - Timeline: http://localhost:{Config.PORT}/api/chronos/timeline")
     print("🔹 Press Ctrl+C to stop")
     
     app.run(

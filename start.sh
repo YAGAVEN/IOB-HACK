@@ -1,4 +1,6 @@
 
+
+
 #!/bin/bash
 
 # TriNetra - Financial Crime Detection Application

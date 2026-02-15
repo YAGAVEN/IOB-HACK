@@ -535,6 +535,17 @@ class ChronosTimeline {
         });
     }
 
+    async setTimeQuantum(quantum) {
+        try {
+            console.log(`🕐 CHRONOS: Setting time quantum to: ${quantum}`);
+            this.timeQuantum = quantum;
+            await this.loadData(this.currentScenario);
+        } catch (error) {
+            console.error('❌ CHRONOS: Error setting time quantum:', error);
+            showNotification('Failed to update time quantum', 'error');
+        }
+    }
+
     async loadData(scenario = 'all') {
         try {
             showLoading();
