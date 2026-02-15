@@ -452,24 +452,12 @@
 
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    --default-font-family: --theme(--font-sans, initial);
-    --default-font-feature-settings: --theme(
-      --font-sans--font-feature-settings,
-      initial
-    );
-    --default-font-variation-settings: --theme(
-      --font-sans--font-variation-settings,
-      initial
-    );
-    --default-mono-font-family: --theme(--font-mono, initial);
-    --default-mono-font-feature-settings: --theme(
-      --font-mono--font-feature-settings,
-      initial
-    );
-    --default-mono-font-variation-settings: --theme(
-      --font-mono--font-variation-settings,
-      initial
-    );
+    --default-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --default-font-feature-settings: initial;
+    --default-font-variation-settings: initial;
+    --default-mono-font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+    --default-mono-font-feature-settings: initial;
+    --default-mono-font-variation-settings: initial;
   }
 
   /* Deprecated */
