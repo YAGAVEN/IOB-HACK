@@ -14,8 +14,9 @@ export async function initSarMap() {
         }
     }
     
-    // Clear any existing map content
+    // Clear any existing map content and reset Leaflet ID to prevent 'already initialized' errors
     mapContainer.innerHTML = '';
+    mapContainer._leaflet_id = null;
     
     // Set styles for the existing container
     mapContainer.style.width = '100%';
