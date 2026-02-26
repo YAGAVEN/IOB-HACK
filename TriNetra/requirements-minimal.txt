@@ -5,3 +5,5 @@ numpy
 scikit-learn
 python-dateutil
 Faker
+supabase>=2.0.0
+python-dotenv>=1.0.0

@@ -7,6 +7,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from config import Config
+from database.db_utils import fetch_account_transactions
 
 class MuleBehaviorEngine:
     """
@@ -73,15 +74,9 @@ class MuleBehaviorEngine:
     def _get_account_transactions(self, account_id):
         """Fetch transactions for an account from database"""
         try:
-            conn = sqlite3.connect(Config.DATABASE_PATH)
-            query = """
-                SELECT * FROM transactions 
-                WHERE from_account = ? OR to_account = ?
-                ORDER BY timestamp
-            """
-            df = pd.read_sql_query(query, conn, params=[account_id, account_id])
-            df['timestamp'] = pd.to_datetime(df['timestamp'])
-            conn.close()
+            df = fetch_account_transactions(account_id)
+            if not df.empty:
+                df['timestamp'] = pd.to_datetime(df['timestamp'])
             return df
         except Exception as e:
             print(f"Error fetching transactions: {e}")

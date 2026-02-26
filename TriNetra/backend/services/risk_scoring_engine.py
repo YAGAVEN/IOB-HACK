@@ -11,6 +11,12 @@ from config import Config
 from services.mule_behavior_engine import MuleBehaviorEngine
 from services.network_engine import NetworkEngine
 from services.layering_engine import LayeringEngine
+from database.db_utils import (
+    fetch_account_transactions,
+    upsert_risk_score,
+    get_risk_score,
+    fetch_all_transactions,
+)
 
 class RiskScoringEngine:
     """
@@ -91,19 +97,11 @@ class RiskScoringEngine:
     def _calculate_velocity_risk(self, account_id):
         """Calculate transaction velocity risk (0-1)"""
         try:
-            conn = sqlite3.connect(Config.DATABASE_PATH)
-            query = """
-                SELECT * FROM transactions 
-                WHERE from_account = ? OR to_account = ?
-                ORDER BY timestamp DESC
-                LIMIT 100
-            """
-            df = pd.read_sql_query(query, conn, params=[account_id, account_id])
-            conn.close()
-            
+            df = fetch_account_transactions(account_id)
             if df.empty:
                 return 0.0
             
+            df = df.head(100)
             df['timestamp'] = pd.to_datetime(df['timestamp'])
             
             # Calculate velocity metrics
@@ -126,55 +124,21 @@ class RiskScoringEngine:
     def _store_risk_score(self, account_id, risk_score):
         """Store risk score in database"""
         try:
-            conn = sqlite3.connect(Config.DATABASE_PATH)
-            cursor = conn.cursor()
-            
-            # Create table if not exists
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS account_risk_scores (
-                    account_id TEXT PRIMARY KEY,
-                    risk_score REAL,
-                    last_updated TEXT
-                )
-            ''')
-            
-            # Insert or update
-            cursor.execute('''
-                INSERT OR REPLACE INTO account_risk_scores 
-                (account_id, risk_score, last_updated)
-                VALUES (?, ?, ?)
-            ''', (account_id, risk_score, datetime.now().isoformat()))
-            
-            conn.commit()
-            conn.close()
-            
+            upsert_risk_score(account_id, risk_score)
         except Exception as e:
             print(f"Error storing risk score: {e}")
     
     def get_stored_risk_score(self, account_id):
         """Retrieve stored risk score from database"""
         try:
-            conn = sqlite3.connect(Config.DATABASE_PATH)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                SELECT risk_score, last_updated 
-                FROM account_risk_scores 
-                WHERE account_id = ?
-            ''', (account_id,))
-            
-            result = cursor.fetchone()
-            conn.close()
-            
-            if result:
+            score = get_risk_score(account_id)
+            if score is not None:
                 return {
                     'account_id': account_id,
-                    'risk_score': result[0],
-                    'last_updated': result[1]
+                    'risk_score': score,
+                    'last_updated': datetime.now().isoformat()
                 }
-            else:
-                return None
-                
+            return None
         except Exception as e:
             print(f"Error retrieving risk score: {e}")
             return None
@@ -182,29 +146,12 @@ class RiskScoringEngine:
     def get_high_risk_accounts(self, threshold=70, limit=50):
         """Get accounts with risk scores above threshold"""
         try:
-            conn = sqlite3.connect(Config.DATABASE_PATH)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                SELECT account_id, risk_score, last_updated 
-                FROM account_risk_scores 
-                WHERE risk_score >= ?
-                ORDER BY risk_score DESC
-                LIMIT ?
-            ''', (threshold, limit))
-            
-            results = cursor.fetchall()
-            conn.close()
-            
-            return [
-                {
-                    'account_id': row[0],
-                    'risk_score': row[1],
-                    'last_updated': row[2]
-                }
-                for row in results
-            ]
-            
+            from database.db_utils import fetch_df
+            df = fetch_df('account_risk_scores')
+            if df.empty:
+                return []
+            filtered = df[df['risk_score'] >= threshold].sort_values('risk_score', ascending=False).head(limit)
+            return filtered.to_dict('records')
         except Exception as e:
             print(f"Error getting high risk accounts: {e}")
             return []
@@ -222,15 +169,12 @@ class RiskScoringEngine:
         if account_ids is None:
             # Get all unique accounts from transactions
             try:
-                conn = sqlite3.connect(Config.DATABASE_PATH)
-                query = """
-                    SELECT DISTINCT from_account FROM transactions
-                    UNION
-                    SELECT DISTINCT to_account FROM transactions
-                """
-                df = pd.read_sql_query(query, conn)
-                conn.close()
-                account_ids = df.iloc[:, 0].tolist()
+                df = fetch_all_transactions()
+                if df.empty:
+                    return 0
+                from_accs = df['from_account'].dropna().unique().tolist()
+                to_accs = df['to_account'].dropna().unique().tolist()
+                account_ids = list(set(from_accs + to_accs))
             except Exception as e:
                 print(f"Error fetching accounts: {e}")
                 return 0

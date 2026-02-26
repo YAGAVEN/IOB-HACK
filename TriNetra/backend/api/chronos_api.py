@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, request
-import sqlite3
 import pandas as pd
 from datetime import datetime, timedelta
 import sys
@@ -9,6 +8,11 @@ import random
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from config import Config
+from database.db_utils import (
+    fetch_transactions_since,
+    fetch_all_transactions,
+    search_transactions as db_search_transactions,
+)
 
 chronos_bp = Blueprint('chronos', __name__)
 
@@ -18,8 +22,6 @@ def get_timeline_data():
     try:
         scenario = request.args.get('scenario', 'all')
         time_quantum = request.args.get('time_quantum', '1m')  # 1m, 6m, 1y, 3y
-        
-        conn = sqlite3.connect(Config.DATABASE_PATH)
         
         # Calculate time range based on quantum
         now = datetime.now()
@@ -34,14 +36,8 @@ def get_timeline_data():
         else:
             start_date = now - timedelta(days=30)  # Default to 1 month
         
-        # Build query based on scenario and time range
-        if scenario == 'all':
-            query = "SELECT * FROM transactions WHERE timestamp >= ? ORDER BY timestamp"
-            df = pd.read_sql_query(query, conn, params=[start_date.isoformat()])
-        else:
-            query = "SELECT * FROM transactions WHERE scenario = ? AND timestamp >= ? ORDER BY timestamp"
-            df = pd.read_sql_query(query, conn, params=[scenario, start_date.isoformat()])
-        conn.close()
+        # Build query based on scenario and time range using db_utils
+        df = fetch_transactions_since(start_date, scenario if scenario != 'all' else None)
         
         # Convert to enhanced timeline format with layering analysis
         timeline_data = []
@@ -88,24 +84,22 @@ def get_timeline_data():
 def get_pattern_analysis():
     """Get detected patterns for visualization"""
     try:
-        conn = sqlite3.connect(Config.DATABASE_PATH)
+        df = fetch_all_transactions()
         
-        # Get pattern statistics
-        query = """
-            SELECT 
-                pattern_type,
-                scenario,
-                COUNT(*) as transaction_count,
-                AVG(suspicious_score) as avg_suspicion,
-                AVG(amount) as avg_amount
-            FROM transactions 
-            GROUP BY pattern_type, scenario
-        """
+        if df.empty:
+            return jsonify({'status': 'success', 'patterns': []})
         
-        df = pd.read_sql_query(query, conn)
-        conn.close()
-        
-        patterns = df.to_dict('records')
+        # Aggregate in Python (works for both Supabase and SQLite)
+        patterns = (
+            df.groupby(['pattern_type', 'scenario'])
+            .agg(
+                transaction_count=('transaction_id', 'count'),
+                avg_suspicion=('suspicious_score', 'mean'),
+                avg_amount=('amount', 'mean'),
+            )
+            .reset_index()
+            .to_dict('records')
+        )
         
         return jsonify({
             'status': 'success',
@@ -123,32 +117,7 @@ def search_transactions():
         search_term = search_data.get('term', '')
         search_type = search_data.get('type', 'all')  # all, amount, account, id
         
-        conn = sqlite3.connect(Config.DATABASE_PATH)
-        
-        # Build search query based on type
-        if search_type == 'amount':
-            query = "SELECT * FROM transactions WHERE amount = ? ORDER BY timestamp DESC"
-            df = pd.read_sql_query(query, conn, params=[float(search_term)])
-        elif search_type == 'account':
-            query = "SELECT * FROM transactions WHERE from_account LIKE ? OR to_account LIKE ? ORDER BY timestamp DESC"
-            df = pd.read_sql_query(query, conn, params=[f'%{search_term}%', f'%{search_term}%'])
-        elif search_type == 'id':
-            query = "SELECT * FROM transactions WHERE transaction_id LIKE ? ORDER BY timestamp DESC"
-            df = pd.read_sql_query(query, conn, params=[f'%{search_term}%'])
-        else:
-            # Search all fields
-            query = """
-                SELECT * FROM transactions 
-                WHERE transaction_id LIKE ? 
-                OR from_account LIKE ? 
-                OR to_account LIKE ? 
-                OR CAST(amount AS TEXT) LIKE ?
-                ORDER BY timestamp DESC
-            """
-            search_pattern = f'%{search_term}%'
-            df = pd.read_sql_query(query, conn, params=[search_pattern, search_pattern, search_pattern, search_pattern])
-        
-        conn.close()
+        df = db_search_transactions(search_term, search_type)
         
         # Format search results with enhanced details
         results = []

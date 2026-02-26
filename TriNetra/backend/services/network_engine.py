@@ -12,6 +12,7 @@ except ImportError:
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from config import Config
+from database.db_utils import fetch_all_transactions
 
 class NetworkEngine:
     """
@@ -63,10 +64,7 @@ class NetworkEngine:
     def _get_all_transactions(self):
         """Fetch all transactions from database"""
         try:
-            conn = sqlite3.connect(Config.DATABASE_PATH)
-            df = pd.read_sql_query("SELECT * FROM transactions", conn)
-            conn.close()
-            return df
+            return fetch_all_transactions()
         except Exception as e:
             print(f"Error fetching transactions: {e}")
             return pd.DataFrame()

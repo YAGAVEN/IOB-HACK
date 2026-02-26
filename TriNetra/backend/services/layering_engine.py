@@ -9,6 +9,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from config import Config
 from services.network_engine import NetworkEngine
+from database.db_utils import fetch_all_transactions as _db_fetch_all
 
 class LayeringEngine:
     """
@@ -249,10 +250,7 @@ class LayeringEngine:
     def _get_all_transactions(self):
         """Fetch all transactions from database"""
         try:
-            conn = sqlite3.connect(Config.DATABASE_PATH)
-            df = pd.read_sql_query("SELECT * FROM transactions ORDER BY timestamp", conn)
-            conn.close()
-            return df
+            return _db_fetch_all()
         except Exception as e:
             print(f"Error fetching transactions: {e}")
             return pd.DataFrame()

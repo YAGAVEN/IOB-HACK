@@ -7,10 +7,12 @@ import random
 import json
 import re
 import numpy as np
+import pandas as pd
 
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from config import Config
+from database.db_utils import fetch_df
 
 autosar_bp = Blueprint('autosar', __name__)
 
@@ -1120,13 +1122,9 @@ def generate_sar():
         pattern_data = request_data.get('pattern', {})
         scenario = pattern_data.get('scenario', 'terrorist_financing')
         
-        # Get transactions for the scenario (using parameterized query to prevent SQL injection)
-        conn = sqlite3.connect(Config.DATABASE_PATH)
-        query = "SELECT * FROM transactions WHERE scenario = ? AND suspicious_score > 0.5 LIMIT 50"
-        
-        import pandas as pd
-        df = pd.read_sql_query(query, conn, params=[scenario])
-        conn.close()
+        # Get transactions for the scenario
+        df = fetch_df('transactions', filters={'scenario': scenario} if scenario != 'all' else None, limit=50)
+        df = df[df['suspicious_score'] > 0.5] if not df.empty else df
         
         transactions = df.to_dict('records')
         
@@ -1174,12 +1172,7 @@ def get_location_mapping():
         scenario = request_data.get('scenario', 'all')
         
         # Get transactions with location data
-        conn = sqlite3.connect(Config.DATABASE_PATH)
-        query = "SELECT * FROM transactions WHERE scenario = ? LIMIT 100"
-        
-        import pandas as pd
-        df = pd.read_sql_query(query, conn, params=[scenario])
-        conn.close()
+        df = fetch_df('transactions', filters={'scenario': scenario} if scenario != 'all' else None, limit=100)
         
         # Generate location mapping data
         location_mapping = []

@@ -26,15 +26,6 @@ def create_app():
     app.register_blueprint(autosar_bp, url_prefix='/api/autosar')
     app.register_blueprint(mule_bp, url_prefix='/api/mule')
     
-    # Serve frontend static files
-    @app.route('/')
-    def serve_frontend():
-        return send_from_directory('../frontend', 'index.html')
-    
-    @app.route('/<path:filename>')
-    def serve_static(filename):
-        return send_from_directory('../frontend', filename)
-    
     # Health check endpoint
     @app.route('/api/health')
     def health_check():
