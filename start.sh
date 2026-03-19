@@ -42,7 +42,7 @@ if [ ! -d "backend" ]; then
     exit 1
 fi
 
-if [ ! -d "frontend" ]; then
+if [ ! -d "frontend-react" ]; then
     echo "❌ Frontend directory not found in TriNetra/"
     exit 1
 fi
@@ -58,7 +58,11 @@ if [ -d "venv" ]; then
     BACKEND_PID=$!
     echo "✅ Backend started (PID: $BACKEND_PID) - http://localhost:5001"
 else
-    echo "❌ Virtual environment not found. Please run: cd backend && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+    echo "❌ Virtual environment not found. Please run setup:"
+    echo "   cd TriNetra/backend"
+    echo "   python -m venv venv"
+    echo "   source venv/bin/activate"
+    echo "   pip install -r requirements.txt"
     exit 1
 fi
 
@@ -66,49 +70,40 @@ cd ..
 
 # Start Frontend
 echo "🔄 Starting frontend server..."
-cd frontend
+cd frontend-react
 
-# Check if node_modules exists and install/update dependencies
+# Check if node_modules exists
 if [ ! -d "node_modules" ]; then
     echo "🔄 Installing frontend dependencies..."
     npm install
-else
-    echo "🔄 Updating frontend dependencies..."
-    npm install
 fi
-
-# Remove old PDF dependencies that cause conflicts
-echo "🧹 Cleaning up conflicting dependencies..."
-npm uninstall jspdf html2canvas jspdf-autotable 2>/dev/null || true
 
 # Start frontend server
 echo "🚀 Starting Vite development server..."
 npm run dev &
 FRONTEND_PID=$!
-echo "✅ Frontend started (PID: $FRONTEND_PID) - http://localhost:5175"
+echo "✅ Frontend started (PID: $FRONTEND_PID) - http://localhost:5173"
 
 cd ..
 
 echo ""
 echo "🎉 TriNetra is now running!"
 echo "=================================="
-echo "🌐 Frontend: http://localhost:5175"
+echo "🌐 Frontend: http://localhost:5173"
 echo "⚙️  Backend:  http://localhost:5001"
 echo "❤️  Health:   http://localhost:5001/api/health"
-echo ""
-echo "📱 Login Page:   http://localhost:5175/login.html"
-echo "🏠 Dashboard:    http://localhost:5175/dashboard.html"
 echo ""
 echo "⚡ Features Available:"
 echo "   🕐 CHRONOS Timeline Analysis"
 echo "   🐍 HYDRA AI Red-Team Battle"
 echo "   📋 Auto-SAR Report Generation"
+echo "   🎯 Mule Account Detection"
 echo ""
 echo "Press Ctrl+C to stop all services"
 echo ""
 
 # Wait a moment for servers to fully start
-sleep 2
+sleep 3
 
 # Check if servers are responding
 echo "🔍 Checking server health..."
@@ -118,12 +113,14 @@ else
     echo "⚠️  Backend server may still be starting..."
 fi
 
-if curl -s http://localhost:5175 > /dev/null 2>&1; then
+if curl -s http://localhost:5173 > /dev/null 2>&1; then
     echo "✅ Frontend server is responding"
 else
     echo "⚠️  Frontend server may still be starting..."
 fi
 
+echo ""
+echo "💡 Open http://localhost:5173 in your browser to access the application"
 echo ""
 
 # Wait for background processes
