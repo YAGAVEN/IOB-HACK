@@ -106,22 +106,20 @@ class TriNetraPDFGenerator {
             ['Suspicious Rate', `${(stats.suspiciousRate * 100).toFixed(1)}%`]
         ]);
 
-        // Top Suspicious Accounts
+        // All Suspicious Accounts
         const suspiciousAccounts = networkData.networkNodes
             .filter(n => n.suspicious)
-            .slice(0, 10)
             .map(n => [n.id.substring(0, 20), n.transactions.length, 'High']);
 
         if (suspiciousAccounts.length > 0) {
-            this.addTableSection('Top Suspicious Accounts', 
+            this.addTableSection('All Suspicious Accounts', 
                 ['Account ID', 'Transactions', 'Risk Level'], 
                 suspiciousAccounts);
         }
 
-        // Transaction Timeline (Top 20 by suspicion)
+        // All Transactions sorted by suspicion
         const topTransactions = timelineData
             .sort((a, b) => b.suspicious_score - a.suspicious_score)
-            .slice(0, 20)
             .map(t => [
                 t.id,
                 this.formatCurrency(t.amount),
@@ -129,7 +127,7 @@ class TriNetraPDFGenerator {
                 new Date(t.timestamp).toLocaleString()
             ]);
 
-        this.addTableSection('Top Suspicious Transactions',
+        this.addTableSection('All Suspicious Transactions (Sorted by Risk)',
             ['Transaction ID', 'Amount', 'Suspicion', 'Timestamp'],
             topTransactions);
 

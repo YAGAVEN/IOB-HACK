@@ -630,9 +630,9 @@ class EnhancedAutoSAR {
                         
                         ${this.allScenarioScores ? `
                         <div class="border-t border-gray-600 pt-4">
-                            <h6 class="text-sm font-semibold text-gray-400 mb-3">Alternative Scenarios:</h6>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                ${Object.entries(this.allScenarioScores).filter(([key, data]) => data.scenario.name !== this.detectedScenario).slice(0, 3).map(([key, data]) => `
+                            <h6 class="text-sm font-semibold text-gray-400 mb-3">All Detected Scenarios:</h6>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                                ${Object.entries(this.allScenarioScores).filter(([key, data]) => data.scenario.name !== this.detectedScenario).map(([key, data]) => `
                                     <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-600/20">
                                         <div class="flex justify-between items-center">
                                             <span class="text-gray-300 text-sm">${data.scenario.name}</span>

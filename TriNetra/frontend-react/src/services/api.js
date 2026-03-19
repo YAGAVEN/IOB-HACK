@@ -66,13 +66,14 @@ class TriNetraAPI {
         }
         
         if (endpoint.includes('/chronos/search')) {
+            const allResults = this.generateSampleTransactions();
             return {
                 status: 'success',
-                results: this.generateSampleTransactions().slice(0, 5),
-                total_matches: 5,
+                results: allResults,
+                total_matches: allResults.length,
                 search_term: 'demo',
                 search_type: 'all',
-                message: "Demo mode - Sample search results"
+                message: "Demo mode - All search results"
             };
         }
         

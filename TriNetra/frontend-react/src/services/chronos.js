@@ -1260,13 +1260,12 @@ class ChronosTimeline {
             
             <div style="margin-bottom: 16px;">
                 <div style="color: #a0aec0; font-size: 12px; margin-bottom: 8px;">Connected Accounts (${connectedAccounts.length})</div>
-                <div style="max-height: 120px; overflow-y: auto; background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 8px;">
-                    ${connectedAccounts.slice(0, 10).map(acc => `
+                <div style="max-height: 300px; overflow-y: auto; background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 8px;">
+                    ${connectedAccounts.map(acc => `
                         <div style="margin-bottom: 4px; font-size: 11px; color: #a0aec0; font-family: monospace;">
                             ${acc.id.substring(0, 16)}...
                         </div>
                     `).join('')}
-                    ${connectedAccounts.length > 10 ? `<div style="font-size: 11px; color: #6b7280;">+ ${connectedAccounts.length - 10} more...</div>` : ''}
                 </div>
             </div>
             

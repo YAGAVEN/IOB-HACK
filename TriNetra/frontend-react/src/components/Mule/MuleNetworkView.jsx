@@ -21,7 +21,7 @@ export default function MuleNetworkView({ accountId, networkData }) {
     const nodes = [{ id: accountId, type: 'target' }]
     const links = []
 
-    for (let i = 0; i < Math.min(connectedCount, 15); i++) {
+    for (let i = 0; i < connectedCount; i++) {
       const nodeId = `ACC_${String(i).padStart(3, '0')}`
       nodes.push({ id: nodeId, type: 'peer' })
       links.push({ source: accountId, target: nodeId })

@@ -364,7 +364,7 @@ Format as technical analysis with actionable recommendations.
             }
         });
         
-        return recommendations.slice(0, 5); // Limit to top 5
+        return recommendations;
     }
 
     extractComplianceInfo(text) {
