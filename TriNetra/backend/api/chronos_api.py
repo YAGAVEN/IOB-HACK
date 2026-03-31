@@ -12,6 +12,7 @@ from database.db_utils import (
     fetch_transactions_since,
     fetch_all_transactions,
     search_transactions as db_search_transactions,
+    append_transactions,
 )
 
 chronos_bp = Blueprint('chronos', __name__)
@@ -154,7 +155,100 @@ def search_transactions():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-# Helper Functions
+@chronos_bp.route('/import-csv', methods=['POST'])
+def import_csv():
+    """Import transactions from an uploaded CSV file into the database."""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'status': 'error', 'message': 'No file provided'}), 400
+
+        file = request.files['file']
+        if not file or file.filename == '':
+            return jsonify({'status': 'error', 'message': 'No file selected'}), 400
+        if not file.filename.lower().endswith('.csv'):
+            return jsonify({'status': 'error', 'message': 'Only CSV files are accepted'}), 400
+
+        import io
+        raw = file.read()
+        # Attempt UTF-8 then fall back to latin-1 for wider compatibility
+        try:
+            content = raw.decode('utf-8')
+        except UnicodeDecodeError:
+            try:
+                content = raw.decode('latin-1')
+            except Exception:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'File encoding not supported. Please save the CSV as UTF-8.'
+                }), 400
+        df = pd.read_csv(io.StringIO(content))
+
+        # Validate required columns
+        required_cols = ['transaction_id', 'from_account', 'to_account', 'amount']
+        missing = [c for c in required_cols if c not in df.columns]
+        if missing:
+            return jsonify({
+                'status': 'error',
+                'message': f'Missing required columns: {", ".join(missing)}'
+            }), 400
+
+        now = datetime.now().isoformat()
+
+        # Fill optional columns with sensible defaults
+        if 'timestamp' not in df.columns:
+            df['timestamp'] = now
+        else:
+            df['timestamp'] = df['timestamp'].fillna(now)
+
+        if 'suspicious_score' not in df.columns:
+            df['suspicious_score'] = 0.0
+        else:
+            df['suspicious_score'] = pd.to_numeric(df['suspicious_score'], errors='coerce').fillna(0.0)
+
+        # Validate that 'amount' column contains numeric values
+        df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
+        invalid_amounts = df['amount'].isna().sum()
+        if invalid_amounts > 0:
+            return jsonify({
+                'status': 'error',
+                'message': f'{invalid_amounts} row(s) have invalid non-numeric values in the "amount" column.'
+            }), 400
+
+        if 'pattern_type' not in df.columns:
+            df['pattern_type'] = 'imported'
+        else:
+            df['pattern_type'] = df['pattern_type'].fillna('imported')
+
+        if 'scenario' not in df.columns:
+            df['scenario'] = 'imported'
+        else:
+            df['scenario'] = df['scenario'].fillna('imported')
+
+        if 'transaction_type' not in df.columns:
+            df['transaction_type'] = 'IMPORT'
+        else:
+            df['transaction_type'] = df['transaction_type'].fillna('IMPORT')
+
+        # Keep only the columns the database expects
+        keep_cols = ['transaction_id', 'from_account', 'to_account', 'amount',
+                     'timestamp', 'suspicious_score', 'pattern_type', 'scenario',
+                     'transaction_type']
+        records = df[keep_cols].to_dict('records')
+
+        inserted = append_transactions(records)
+
+        return jsonify({
+            'status': 'success',
+            'message': f'{inserted} transaction(s) imported successfully '
+                       f'({len(records) - inserted} duplicate(s) skipped)',
+            'imported_count': inserted,
+            'total_rows': len(records)
+        })
+
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error('CSV import error: %s', e, exc_info=True)
+        return jsonify({'status': 'error', 'message': 'An error occurred while processing the file.'}), 500
 
 def generate_aadhar_location():
     """Generate realistic Aadhar-based location data"""

@@ -207,7 +207,7 @@ def count_transactions() -> int:
 
 
 def bulk_insert_transactions(records: list[dict]) -> None:
-    """Insert a list of transaction dicts."""
+    """Insert a list of transaction dicts (replaces table – used for initial seeding)."""
     if not records:
         return
     sb = _supabase()
@@ -224,6 +224,58 @@ def bulk_insert_transactions(records: list[dict]) -> None:
     df = pd.DataFrame(records)
     df.to_sql('transactions', conn, if_exists='replace', index=False)
     conn.close()
+
+
+def append_transactions(records: list[dict]) -> int:
+    """Append new transaction records without replacing existing data.
+
+    Duplicate ``transaction_id`` values are silently skipped.
+    Returns the number of rows actually inserted.
+    """
+    if not records:
+        return 0
+    sb = _supabase()
+    if sb is not None:
+        chunk_size = 500
+        inserted = 0
+        for i in range(0, len(records), chunk_size):
+            chunk = records[i:i + chunk_size]
+            res = sb.table('transactions').upsert(chunk, on_conflict='transaction_id').execute()
+            inserted += len(res.data) if res.data else 0
+        return inserted
+    # SQLite fallback
+    cfg = _get_config()
+    conn = sqlite3.connect(cfg.DATABASE_PATH)
+    cursor = conn.cursor()
+    inserted = 0
+    failed = 0
+    for rec in records:
+        try:
+            cursor.execute(
+                "INSERT OR IGNORE INTO transactions "
+                "(transaction_id, from_account, to_account, amount, timestamp, "
+                " transaction_type, suspicious_score, pattern_type, scenario) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    rec.get('transaction_id'),
+                    rec.get('from_account'),
+                    rec.get('to_account'),
+                    rec.get('amount'),
+                    rec.get('timestamp'),
+                    rec.get('transaction_type'),
+                    rec.get('suspicious_score', 0.0),
+                    rec.get('pattern_type'),
+                    rec.get('scenario'),
+                ),
+            )
+            inserted += cursor.rowcount
+        except Exception as exc:
+            failed += 1
+            import logging
+            logging.getLogger(__name__).warning('Failed to insert record %s: %s', rec.get('transaction_id'), exc)
+    conn.commit()
+    conn.close()
+    return inserted
 
 
 # ---------------------------------------------------------------------------
