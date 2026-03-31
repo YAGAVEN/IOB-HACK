@@ -1,0 +1,12 @@
+from_account,to_account,amount,timestamp,transaction_type,suspicious_score,pattern_type,scenario
+ACC500,ACC501,300000,2026-03-31 10:00:00,TRANSFER,0.95,multiple_hops,Initial transfer
+ACC501,ACC502,295000,2026-03-31 10:05:00,TRANSFER,0.96,multiple_hops,Layering step 1
+ACC502,ACC503,290000,2026-03-31 10:10:00,TRANSFER,0.97,multiple_hops,Layering step 2
+ACC503,ACC504,285000,2026-03-31 10:15:00,TRANSFER,0.98,multiple_hops,Layering step 3
+ACC504,ACC505,280000,2026-03-31 10:20:00,TRANSFER,0.99,multiple_hops,Final destination
+,,,,,,,
+ACC600,ACC601,450000,2026-03-31 11:00:00,TRANSFER,0.95,multiple_hops,Initial transfer
+ACC601,ACC602,445000,2026-03-31 11:05:00,TRANSFER,0.96,multiple_hops,Layering step 1
+ACC602,ACC603,440000,2026-03-31 11:10:00,TRANSFER,0.97,multiple_hops,Layering step 2
+ACC603,ACC604,435000,2026-03-31 11:15:00,TRANSFER,0.98,multiple_hops,Layering step 3
+ACC604,ACC605,430000,2026-03-31 11:20:00,TRANSFER,0.99,multiple_hops,Final destination
