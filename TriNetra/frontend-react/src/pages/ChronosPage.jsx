@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Layout/Navbar.jsx'
 import ProgressFlow from '../components/shared/ProgressFlow.jsx'
 import NotificationToast, { notify } from '../components/shared/NotificationToast.jsx'
+import { Icon } from '../components/Icons/IconSystem'
 import TimelineView from '../components/Chronos/TimelineView.jsx'
 import PlaybackControls from '../components/Chronos/PlaybackControls.jsx'
 import AIInsightsPanel from '../components/Chronos/AIInsightsPanel.jsx'
@@ -140,14 +141,14 @@ export default function ChronosPage() {
 
   return (
     <div className="text-white">
-      <Navbar pageTitle="CHRONOS" pageIcon="🕐" pageTitleColor="text-[#00ff87]" />
+      <Navbar pageTitle="CHRONOS" pageIcon={<Icon name="Clock" size={24} className="text-[#00ff87]" />} pageTitleColor="text-[#00ff87]" />
       <NotificationToast />
 
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-[#00ff87] to-[#00d4ff] rounded-full flex items-center justify-center text-4xl animate-[glow_2s_ease-in-out_infinite_alternate]">
-            🕐
+            <Icon name="Clock" size={48} className="text-white" />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-[#00ff87] to-[#00d4ff] bg-clip-text text-transparent">
             CHRONOS Timeline

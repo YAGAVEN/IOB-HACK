@@ -1,11 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { Icon } from '../Icons/IconSystem'
 
 const NAV_ITEMS = [
-  { path: '/chronos', label: 'CHRONOS', icon: '🕐', color: 'text-[#00ff87] border-[#00ff87]' },
-  { path: '/autosar', label: 'Auto-SAR', icon: '📋', color: 'text-orange-400 border-orange-400' },
-  { path: '/hydra', label: 'HYDRA', icon: '🐍', color: 'text-red-400 border-red-400' },
-  { path: '/mule', label: 'Mule', icon: '🐴', color: 'text-purple-400 border-purple-400' },
+  { path: '/chronos', label: 'CHRONOS', icon: 'Clock', color: 'text-[#00ff87] border-[#00ff87]' },
+  { path: '/autosar', label: 'Auto-SAR', icon: 'FileText', color: 'text-orange-400 border-orange-400' },
+  { path: '/hydra', label: 'HYDRA', icon: 'Shield', color: 'text-red-400 border-red-400' },
+  { path: '/mule', label: 'Mule', icon: 'Users', color: 'text-purple-400 border-purple-400' },
 ]
 
 export default function Navbar({ pageTitle, pageTitleColor = 'text-[#00ff87]', pageIcon }) {
@@ -30,26 +31,28 @@ export default function Navbar({ pageTitle, pageTitleColor = 'text-[#00ff87]', p
               TriNetra
             </h1>
             <span className="text-gray-400 hidden sm:block">|</span>
-            <h2 className={`text-xl font-semibold hidden sm:block ${pageTitleColor}`}>
-              {pageIcon} {pageTitle}
-            </h2>
+            <div className={`flex items-center gap-2 text-xl font-semibold hidden sm:block ${pageTitleColor}`}>
+              {pageIcon && <span>{pageIcon}</span>}
+              <span>{pageTitle}</span>
+            </div>
           </div>
 
           {/* Navigation links */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-3">
             {NAV_ITEMS.map(({ path, label, icon, color }) => {
               const isActive = location.pathname === path
               return (
                 <button
                   key={path}
                   onClick={() => navigate(path)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 border
+                  className={`px-5 py-2.5 rounded-xl text-base font-semibold transition-all duration-200 border-2 flex items-center gap-2.5 shadow-lg
                     ${isActive
-                      ? `${color} bg-white/10`
-                      : 'text-gray-400 border-transparent hover:text-white hover:bg-white/5'
+                      ? `${color} bg-white/15 shadow-[0_0_20px_rgba(0,255,135,0.3)] scale-105`
+                      : 'text-gray-400 border-gray-600/50 hover:text-white hover:bg-white/10 hover:border-white/30 hover:scale-105'
                     }`}
                 >
-                  {icon} {label}
+                  <Icon name={icon} size={20} />
+                  <span>{label}</span>
                 </button>
               )
             })}
@@ -61,9 +64,10 @@ export default function Navbar({ pageTitle, pageTitleColor = 'text-[#00ff87]', p
             )}
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm flex items-center gap-2"
             >
-              Logout
+              <Icon name="LogOut" size={16} />
+              <span>Logout</span>
             </button>
           </div>
         </div>

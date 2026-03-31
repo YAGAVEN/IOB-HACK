@@ -496,7 +496,7 @@ class ChronosTimeline {
             this.timeQuantum = quantum;
             await this.loadData(this.currentScenario);
         } catch (error) {
-            console.error('❌ CHRONOS: Error setting time quantum:', error);
+            console.error('[ERROR] CHRONOS: Error setting time quantum:', error);
             showNotification('Failed to update time quantum', 'error');
         }
     }
@@ -519,7 +519,7 @@ class ChronosTimeline {
             if (response.status === 'success' && response.data) {
                 console.log(`📈 CHRONOS: Raw data received: ${response.data.length} transactions`);
                 this.data = this.parseEnhancedTransactionData(response.data);
-                console.log(`✅ CHRONOS: Parsed data: ${this.data.length} transactions`);
+                console.log(`[SUCCESS] CHRONOS: Parsed data: ${this.data.length} transactions`);
                 
                 if (this.data.length > 0) {
                     this.render();
@@ -539,7 +539,7 @@ class ChronosTimeline {
                 throw new Error(response.message || 'Failed to load timeline data');
             }
         } catch (error) {
-            console.error('❌ CHRONOS Error loading timeline data:', error);
+            console.error('[ERROR] CHRONOS Error loading timeline data:', error);
             this.showErrorState(error.message);
             showNotification('Failed to load timeline data', 'error');
         } finally {
@@ -555,7 +555,7 @@ class ChronosTimeline {
             .attr('class', 'error-state')
             .html(`
                 <div class="error-content">
-                    <h4>⚠️ Unable to Load Timeline Data</h4>
+                    <h4>[WARN] Unable to Load Timeline Data</h4>
                     <p>${message}</p>
                     <button class="retry-button" onclick="window.TriNetra.getChronos().loadData('${this.currentScenario}')">
                         🔄 Try Again
@@ -609,7 +609,7 @@ class ChronosTimeline {
                 throw new Error(response.message || 'Search failed');
             }
         } catch (error) {
-            console.error('❌ CHRONOS Search error:', error);
+            console.error('[ERROR] CHRONOS Search error:', error);
             showNotification('Search failed. Please try again.', 'error');
             return [];
         } finally {
@@ -839,7 +839,7 @@ class ChronosTimeline {
                 </div>
                 
                 <div class="analysis-section">
-                    <h4>⚠️ Risk Assessment</h4>
+                    <h4>[WARN] Risk Assessment</h4>
                     <div class="risk-assessment">
                         <div class="risk-score" style="color: ${result.suspicious_score > 0.8 ? '#ff4444' : 
                                                              result.suspicious_score > 0.5 ? '#ffaa00' : '#44ff44'}">
@@ -1453,7 +1453,7 @@ class ChronosTimeline {
         const infoPanel = d3.select(`#${this.containerId} .timeline-info`);
         if (!infoPanel.empty()) {
             infoPanel.html(`
-                <h4>⚠️ No Data Available</h4>
+                <h4>[WARN] No Data Available</h4>
                 <p>No transaction data found for the selected scenario. Please try a different filter or check the data source.</p>
             `);
         }
@@ -1942,7 +1942,7 @@ class ChronosTimeline {
         } else {
             this.isPlaying = false;
             this.updateButtonStates();
-            console.log('✅ CHRONOS: Animation completed');
+            console.log('[SUCCESS] CHRONOS: Animation completed');
             showNotification('Timeline animation completed', 'success');
             // Reset for replay
             this.currentFrame = 0;
@@ -1951,7 +1951,7 @@ class ChronosTimeline {
 
     updateAnimationProgress(visibleCount) {
         if (!this.data || this.data.length === 0) {
-            console.log('⚠️ CHRONOS: No data available for progress update');
+            console.log('[WARN] CHRONOS: No data available for progress update');
             return;
         }
         
@@ -2021,7 +2021,7 @@ class ChronosTimeline {
 
     renderNetwork() {
         if (!this.data.length) {
-            console.log('⚠️ CHRONOS: No data available for network view');
+            console.log('[WARN] CHRONOS: No data available for network view');
             return;
         }
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Layout/Navbar.jsx'
 import ProgressFlow from '../components/shared/ProgressFlow.jsx'
 import NotificationToast, { notify } from '../components/shared/NotificationToast.jsx'
+import { Icon } from '../components/Icons/IconSystem'
 import SARMapView from '../components/AutoSAR/SARMapView.jsx'
 
 export default function AutoSARPage() {
@@ -118,14 +119,14 @@ export default function AutoSARPage() {
 
   return (
     <div className="text-white">
-      <Navbar pageTitle="Auto-SAR" pageIcon="📋" pageTitleColor="text-[#00ff87]" />
+      <Navbar pageTitle="Auto-SAR" pageIcon={<Icon name="FileText" size={24} className="text-[#00ff87]" />} pageTitleColor="text-[#00ff87]" />
       <NotificationToast />
 
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center text-4xl animate-[glow_2s_ease-in-out_infinite_alternate]">
-            📋
+            <Icon name="FileText" size={48} className="text-white" />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
             Auto-SAR Generator
@@ -216,7 +217,7 @@ export default function AutoSARPage() {
 
         {/* SAR Report */}
         <div className="bg-[#1a1a2e]/60 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-orange-500/20">
-          <h3 className="text-xl font-semibold mb-4 text-orange-500">📋 SAR Report</h3>
+          <h3 className="text-xl font-semibold mb-4 text-orange-500"><Icon name="FileText" size={48} className="text-white" /> SAR Report</h3>
           <div className="min-h-[400px]">
             {sarReport ? <SARReportDisplay report={sarReport} /> : (
               <div className="text-gray-400 text-center py-16">

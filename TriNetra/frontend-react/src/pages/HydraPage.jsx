@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Layout/Navbar.jsx'
 import ProgressFlow from '../components/shared/ProgressFlow.jsx'
 import NotificationToast, { notify } from '../components/shared/NotificationToast.jsx'
+import { Icon } from '../components/Icons/IconSystem'
 import BattleArenaView from '../components/Hydra/BattleArenaView.jsx'
 import BattleMetrics from '../components/Hydra/BattleMetrics.jsx'
 
@@ -92,20 +93,19 @@ export default function HydraPage() {
   }
 
   const handleComplete = () => {
-    showCompletionCelebration()
-    setTimeout(() => navigate('/chronos'), 3000)
+    navigate('/chronos')
   }
 
   return (
     <div className="text-white">
-      <Navbar pageTitle="HYDRA" pageIcon="🐍" pageTitleColor="text-red-500" />
+      <Navbar pageTitle="HYDRA" pageIcon={<Icon name="Shield" size={24} className="text-red-500" />} pageTitleColor="text-red-500" />
       <NotificationToast />
 
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-red-500 to-purple-600 rounded-full flex items-center justify-center text-4xl animate-[battle_2s_ease-in-out_infinite]">
-            🐍
+            <Icon name="Shield" size={48} className="text-white" />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
             HYDRA AI Red-Team
@@ -239,10 +239,6 @@ export default function HydraPage() {
 }
 
 /* ── Helpers ── */
-function delay(ms) {
-  return new Promise((r) => setTimeout(r, ms))
-}
-
 function generateMockInsights(metrics) {
   const rate = metrics.detectionRate
   return `
@@ -265,18 +261,4 @@ function generateMockInsights(metrics) {
       </div>
     </div>
   `
-}
-
-function showCompletionCelebration() {
-  const el = document.createElement('div')
-  el.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50'
-  el.innerHTML = `
-    <div style="background:linear-gradient(135deg,#00ff87,#00d4ff);color:#0a0a0f" class="p-8 rounded-2xl text-center animate-pulse">
-      <div style="font-size:4rem" class="mb-4">🎉</div>
-      <h2 class="text-2xl font-bold mb-2">Congratulations!</h2>
-      <p class="text-lg">You've completed the full TriNetra analysis workflow!</p>
-    </div>
-  `
-  document.body.appendChild(el)
-  setTimeout(() => el.remove(), 3000)
 }
