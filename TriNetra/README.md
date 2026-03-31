@@ -1,34 +1,39 @@
 # TriNetra - Financial Crime Detection
 *Making the invisible visible*
 
-## Quick Start (Claude Code Ready)
+TriNetra is an advanced, AI-powered financial crime detection platform designed to detect, visualize, and report suspicious activities seamlessly.
 
-### 1. Setup Backend
+## Quick Start
+
+The easiest way to get both the React frontend and Flask backend running locally is using the single startup script:
+
 ```bash
-cd backend
-pip install -r ../requirements.txt
-python app.py
+# Start both Backend & Frontend servers concurrently
+./start.sh
 ```
 
-### 2. Setup Frontend (New Terminal)
-```bash
-cd frontend
-npm install
-npm run dev
-```
+**Access the Application:**
+- **Frontend Dashboard:** [http://localhost:5173](http://localhost:5173)
+- **Backend API:** [http://localhost:5001](http://localhost:5001)
 
-### 3. Access Application
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
+*Note: Press `Ctrl+C` in your terminal to shut down both processes safely.*
 
 ## Features
-- 🕐 **CHRONOS**: Time-lapse visualization
-- 🐍 **HYDRA**: AI red-teaming
-- 📋 **Auto-SAR**: Report generation
+
+TriNetra modules are designed to tackle distinct phases of anti-money laundering and financial crime detection:
+
+- 🕐 **CHRONOS**: Time-lapse transaction visualization using interactive graphs and node networks.
+- � **Auto-SAR**: Generate and validate comprehensive, regulatory-compliant Suspicious Activity Reports (SARs) with one click using AI Analysis and Map visualizations.
+- �🐍 **HYDRA**: AI red-teaming arena. Test detection models against adversarially generated synthetic transaction patterns.
+- � **Mule Detection**: Identify potential money mules and account intermediaries by analyzing network relationships and velocity metrics.
 
 ## Tech Stack
-- Backend: Python Flask + SQLite
-- Frontend: Vanilla JS + D3.js + Vite
-- PWA: Service Worker + Manifest
 
-Built for National CyberShield Hackathon 2025
+The architecture has been unified for robustness and modern web performance:
+
+- **Frontend:** React + Vite + Tailwind CSS + D3.js + Leaflet
+- **Backend:** Python Flask
+- **Database:** Supabase (PostgreSQL) + Fallback to SQLite (configurable via `.env`)
+
+---
+*Built for National CyberShield Hackathon 2025*

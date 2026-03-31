@@ -49,6 +49,15 @@ class TriNetraDataGenerator:
             )
         ''')
         
+        # Account risk scores table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS account_risk_scores (
+                account_id TEXT PRIMARY KEY,
+                risk_score REAL,
+                last_updated TEXT
+            )
+        ''')
+        
         conn.commit()
         conn.close()
     
@@ -152,8 +161,6 @@ class TriNetraDataGenerator:
     
     def populate_database(self):
         """Populate database with all scenarios"""
-        conn = sqlite3.connect(self.db_path)
-        
         # Generate data for all scenarios
         all_transactions = []
         scenarios = ['terrorist_financing', 'crypto_sanctions', 'human_trafficking']
@@ -166,14 +173,21 @@ class TriNetraDataGenerator:
         normal_transactions = self.generate_scenario_data('normal', 300)
         all_transactions.extend(normal_transactions)
         
-        # Insert transactions
-        df = pd.DataFrame(all_transactions)
-        df.to_sql('transactions', conn, if_exists='replace', index=False)
-        
-        print(f"✅ Generated {len(all_transactions)} transactions")
-        print(f"✅ Database populated at: {self.db_path}")
-        
-        conn.close()
+        # Insert via db_utils (handles both Supabase and SQLite)
+        try:
+            import sys, os
+            sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+            from database.db_utils import bulk_insert_transactions
+            bulk_insert_transactions(all_transactions)
+            print(f"✅ Generated {len(all_transactions)} transactions")
+        except Exception as e:
+            # Direct SQLite fallback
+            conn = sqlite3.connect(self.db_path)
+            df = pd.DataFrame(all_transactions)
+            df.to_sql('transactions', conn, if_exists='replace', index=False)
+            conn.close()
+            print(f"✅ Generated {len(all_transactions)} transactions (SQLite)")
+        print(f"✅ Database populated")
 
 def init_database():
     """Initialize database with synthetic data"""
@@ -182,12 +196,18 @@ def init_database():
     generator = TriNetraDataGenerator(Config.DATABASE_PATH)
     generator.create_tables()
     
-    # Only populate if database is empty
-    conn = sqlite3.connect(Config.DATABASE_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM transactions")
-    count = cursor.fetchone()[0]
-    conn.close()
+    # Check row count via db_utils (Supabase or SQLite)
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+        from database.db_utils import count_transactions
+        count = count_transactions()
+    except Exception:
+        conn = sqlite3.connect(Config.DATABASE_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM transactions")
+        count = cursor.fetchone()[0]
+        conn.close()
     
     if count == 0:
         print("🔄 Initializing TriNetra database...")

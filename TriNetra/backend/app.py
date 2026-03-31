@@ -10,6 +10,7 @@ from config import Config
 from api.chronos_api import chronos_bp
 from api.hydra_api import hydra_bp  
 from api.autosar_api import autosar_bp
+from api.mule_api import mule_bp
 from data.synthetic_generator import init_database
 
 def create_app():
@@ -23,15 +24,7 @@ def create_app():
     app.register_blueprint(chronos_bp, url_prefix='/api/chronos')
     app.register_blueprint(hydra_bp, url_prefix='/api/hydra')
     app.register_blueprint(autosar_bp, url_prefix='/api/autosar')
-    
-    # Serve frontend static files
-    @app.route('/')
-    def serve_frontend():
-        return send_from_directory('../frontend', 'index.html')
-    
-    @app.route('/<path:filename>')
-    def serve_static(filename):
-        return send_from_directory('../frontend', filename)
+    app.register_blueprint(mule_bp, url_prefix='/api/mule')
     
     # Health check endpoint
     @app.route('/api/health')
@@ -44,10 +37,17 @@ if __name__ == '__main__':
     app = create_app()
     
     # Initialize database on first run
-    init_database()
+    try:
+        init_database()
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Database initialization warning: {e}")
     
     print("🔹 TriNetra Backend Starting...")
     print(f"🔹 Server running at: http://localhost:{Config.PORT}")
+    print("🔹 API endpoints:")
+    print(f"🔹   - Health: http://localhost:{Config.PORT}/api/health")
+    print(f"🔹   - Timeline: http://localhost:{Config.PORT}/api/chronos/timeline")
     print("🔹 Press Ctrl+C to stop")
     
     app.run(
