@@ -3,6 +3,7 @@ import Navbar from '../components/Layout/Navbar.jsx'
 import NotificationToast, { notify } from '../components/shared/NotificationToast.jsx'
 import MuleRiskPanel from '../components/Mule/MuleRiskPanel.jsx'
 import MuleNetworkView from '../components/Mule/MuleNetworkView.jsx'
+import { Icon } from '../components/Icons/IconSystem'
 
 export default function MulePage() {
   const [accountId, setAccountId] = useState('')
@@ -135,14 +136,14 @@ export default function MulePage() {
 
   return (
     <div className="text-white">
-      <Navbar pageTitle="Mule Detection" pageIcon="🐴" pageTitleColor="text-purple-400" />
+      <Navbar pageTitle="Mule Detection" pageIcon={<Icon name="Users" size={24} className="text-purple-400" />} pageTitleColor="text-purple-400" />
       <NotificationToast />
 
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center text-4xl animate-[glow_2s_ease-in-out_infinite_alternate]">
-            🐴
+          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center animate-[glow_2s_ease-in-out_infinite_alternate]">
+            <Icon name="Users" size={48} className="text-white" />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             Mule Detection Engine
@@ -168,16 +169,18 @@ export default function MulePage() {
             <button
               onClick={analyseAccount}
               disabled={loading}
-              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold rounded-xl hover:opacity-90 hover:scale-105 transition-all duration-300 disabled:opacity-50"
+              className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold rounded-xl hover:opacity-90 hover:scale-105 transition-all duration-300 disabled:opacity-50 flex items-center gap-2 justify-center"
             >
-              {loading ? '🔄 Analysing…' : '🔍 Analyse'}
+              <Icon name={loading ? "RefreshCw" : "Search"} size={20} className={loading ? "animate-spin" : ""} />
+              <span>{loading ? 'Analysing…' : 'Analyse'}</span>
             </button>
             <button
               onClick={generateSAR}
               disabled={sarGenerating || !riskData}
-              className="px-6 py-4 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl transition-all disabled:opacity-40"
+              className="px-6 py-4 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl transition-all disabled:opacity-40 flex items-center gap-2 justify-center"
             >
-              {sarGenerating ? 'Generating…' : '📋 Generate SAR'}
+              <Icon name={sarGenerating ? "RefreshCw" : "FileText"} size={20} className={sarGenerating ? "animate-spin" : ""} />
+              <span>{sarGenerating ? 'Generating…' : 'Generate SAR'}</span>
             </button>
           </div>
 

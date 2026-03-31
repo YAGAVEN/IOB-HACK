@@ -3,6 +3,9 @@
  * and sub-scores for a given account.
  */
 
+import { RiskBadge } from '../shared/Badges'
+import { Icon } from '../Icons/IconSystem'
+
 function ScoreBar({ label, value, color = 'bg-[#00ff87]' }) {
   const pct = Math.round((value ?? 0) * 100)
   return (
@@ -64,12 +67,15 @@ export default function MuleRiskPanel({ riskData, networkData, layeringData, loa
             <span className="text-3xl font-bold">{Math.round(riskScore)}</span>
             <span className="text-xs">/ 100</span>
           </div>
-          <div>
-            <div className={`text-2xl font-bold ${levelClass.split(' ')[0]}`}>{riskLevel}</div>
-            <div className="text-gray-400 text-sm mt-1">
+          <div className="flex flex-col gap-2">
+            <RiskBadge level={riskLevel} score={Math.round(riskScore)} size="lg" />
+            <div className="text-gray-400 text-sm">
               Account: <span className="text-white font-mono">{riskData.account_id}</span>
             </div>
-            <div className="text-gray-500 text-xs mt-1">{riskData.timestamp?.slice(0, 19)?.replace('T', ' ')}</div>
+            <div className="text-gray-500 text-xs flex items-center gap-1">
+              <Icon name="Calendar" size={12} />
+              <span>{riskData.timestamp?.slice(0, 19)?.replace('T', ' ')}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -113,8 +119,11 @@ export default function MuleRiskPanel({ riskData, networkData, layeringData, loa
               { flag: layeringData.round_tripping, label: 'Round-Tripping' },
             ].map(({ flag, label }) => (
               <div key={label} className="flex items-center justify-between">
-                <span className="text-gray-300 text-sm">{label}</span>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${flag ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                <span className="text-gray-300 text-sm flex items-center gap-2">
+                  <Icon name={flag ? "AlertTriangle" : "CheckCircle"} size={16} className={flag ? "text-red-400" : "text-green-400"} />
+                  {label}
+                </span>
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${flag ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30'}`}>
                   {flag ? 'DETECTED' : 'CLEAR'}
                 </span>
               </div>

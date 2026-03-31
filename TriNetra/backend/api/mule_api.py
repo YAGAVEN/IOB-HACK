@@ -1,6 +1,8 @@
 from flask import Blueprint, jsonify, request
 import sys
 import os
+import numpy as np
+import math
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
@@ -10,6 +12,7 @@ from services.layering_engine import LayeringEngine
 from services.risk_scoring_engine import RiskScoringEngine
 from services.explainability_engine import ExplainabilityEngine
 from services.auto_sar import MuleAutoSAR
+from database.db_utils import fetch_account_transactions
 
 mule_bp = Blueprint('mule', __name__)
 
@@ -21,12 +24,39 @@ risk_engine = RiskScoringEngine()
 explain_engine = ExplainabilityEngine()
 sar_generator = MuleAutoSAR()
 
+def _account_has_transactions(account_id):
+    """Return True if account exists in transaction history."""
+    transactions = fetch_account_transactions(account_id)
+    return not transactions.empty
+
+def _json_safe(value):
+    """Recursively convert NumPy/Pandas scalars to native Python types for JSON serialization."""
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_json_safe(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(_json_safe(v) for v in value)
+    if isinstance(value, np.generic):
+        native = value.item()
+        if isinstance(native, float) and not math.isfinite(native):
+            return None
+        return native
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return value
+
 @mule_bp.route('/mule-risk/<account_id>', methods=['GET'])
 def get_mule_risk(account_id):
     """Get comprehensive mule risk assessment for an account"""
     try:
+        if not _account_has_transactions(account_id):
+            return jsonify({
+                'error': 'Account not found in transaction history',
+                'account_id': account_id
+            }), 404
         risk_analysis = risk_engine.calculate_mule_risk(account_id)
-        return jsonify(risk_analysis), 200
+        return jsonify(_json_safe(risk_analysis)), 200
     except Exception as e:
         return jsonify({'error': str(e), 'account_id': account_id}), 500
 
@@ -34,8 +64,13 @@ def get_mule_risk(account_id):
 def get_network_metrics(account_id):
     """Get network analysis metrics for an account"""
     try:
+        if not _account_has_transactions(account_id):
+            return jsonify({
+                'error': 'Account not found in transaction history',
+                'account_id': account_id
+            }), 404
         network_analysis = network_engine.analyze_account_network(account_id)
-        return jsonify(network_analysis), 200
+        return jsonify(_json_safe(network_analysis)), 200
     except Exception as e:
         return jsonify({'error': str(e), 'account_id': account_id}), 500
 
@@ -43,8 +78,13 @@ def get_network_metrics(account_id):
 def get_layering_detection(account_id):
     """Get layering detection results for an account"""
     try:
+        if not _account_has_transactions(account_id):
+            return jsonify({
+                'error': 'Account not found in transaction history',
+                'account_id': account_id
+            }), 404
         layering_analysis = layering_engine.analyze_layering_risk(account_id)
-        return jsonify(layering_analysis), 200
+        return jsonify(_json_safe(layering_analysis)), 200
     except Exception as e:
         return jsonify({'error': str(e), 'account_id': account_id}), 500
 
@@ -52,8 +92,13 @@ def get_layering_detection(account_id):
 def explain_risk(account_id):
     """Get explainable AI analysis for account risk"""
     try:
+        if not _account_has_transactions(account_id):
+            return jsonify({
+                'error': 'Account not found in transaction history',
+                'account_id': account_id
+            }), 404
         explanation = explain_engine.explain_account_risk(account_id)
-        return jsonify(explanation), 200
+        return jsonify(_json_safe(explanation)), 200
     except Exception as e:
         return jsonify({'error': str(e), 'account_id': account_id}), 500
 
@@ -61,6 +106,11 @@ def explain_risk(account_id):
 def generate_mule_sar(account_id):
     """Generate Suspicious Activity Report for suspected mule account"""
     try:
+        if not _account_has_transactions(account_id):
+            return jsonify({
+                'error': 'Account not found in transaction history',
+                'account_id': account_id
+            }), 404
         output_format = request.args.get('format', 'json')
         
         if output_format == 'summary':
@@ -76,8 +126,13 @@ def generate_mule_sar(account_id):
 def get_behavioral_profile(account_id):
     """Get behavioral profiling for an account"""
     try:
+        if not _account_has_transactions(account_id):
+            return jsonify({
+                'error': 'Account not found in transaction history',
+                'account_id': account_id
+            }), 404
         analysis = behavior_engine.analyze_account(account_id)
-        return jsonify(analysis), 200
+        return jsonify(_json_safe(analysis)), 200
     except Exception as e:
         return jsonify({'error': str(e), 'account_id': account_id}), 500
 

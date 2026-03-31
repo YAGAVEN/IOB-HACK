@@ -496,7 +496,7 @@ class ChronosTimeline {
             this.timeQuantum = quantum;
             await this.loadData(this.currentScenario);
         } catch (error) {
-            console.error('❌ CHRONOS: Error setting time quantum:', error);
+            console.error('[ERROR] CHRONOS: Error setting time quantum:', error);
             showNotification('Failed to update time quantum', 'error');
         }
     }
@@ -519,7 +519,7 @@ class ChronosTimeline {
             if (response.status === 'success' && response.data) {
                 console.log(`📈 CHRONOS: Raw data received: ${response.data.length} transactions`);
                 this.data = this.parseEnhancedTransactionData(response.data);
-                console.log(`✅ CHRONOS: Parsed data: ${this.data.length} transactions`);
+                console.log(`[SUCCESS] CHRONOS: Parsed data: ${this.data.length} transactions`);
                 
                 if (this.data.length > 0) {
                     this.render();
@@ -539,7 +539,7 @@ class ChronosTimeline {
                 throw new Error(response.message || 'Failed to load timeline data');
             }
         } catch (error) {
-            console.error('❌ CHRONOS Error loading timeline data:', error);
+            console.error('[ERROR] CHRONOS Error loading timeline data:', error);
             this.showErrorState(error.message);
             showNotification('Failed to load timeline data', 'error');
         } finally {
@@ -555,7 +555,7 @@ class ChronosTimeline {
             .attr('class', 'error-state')
             .html(`
                 <div class="error-content">
-                    <h4>⚠️ Unable to Load Timeline Data</h4>
+                    <h4>[WARN] Unable to Load Timeline Data</h4>
                     <p>${message}</p>
                     <button class="retry-button" onclick="window.TriNetra.getChronos().loadData('${this.currentScenario}')">
                         🔄 Try Again
@@ -609,7 +609,7 @@ class ChronosTimeline {
                 throw new Error(response.message || 'Search failed');
             }
         } catch (error) {
-            console.error('❌ CHRONOS Search error:', error);
+            console.error('[ERROR] CHRONOS Search error:', error);
             showNotification('Search failed. Please try again.', 'error');
             return [];
         } finally {
@@ -625,37 +625,92 @@ class ChronosTimeline {
         
         if (response.results.length === 0) {
             content.html(`
-                <div class="no-results">
-                    <h4>📭 No Results Found</h4>
-                    <p>No transactions match your search criteria.</p>
-                    <p><strong>Search term:</strong> "${response.search_term}"</p>
-                    <p><strong>Search type:</strong> ${response.search_type}</p>
+                <div style="text-align: center; padding: 60px 40px; 
+                            background: rgba(26, 26, 46, 0.6); 
+                            border: 2px dashed rgba(0, 212, 255, 0.3); 
+                            border-radius: 16px;">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" style="margin: 0 auto 24px; opacity: 0.4;">
+                        <circle cx="11" cy="11" r="8" stroke="#00d4ff" stroke-width="2"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="#00d4ff" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="8" y1="11" x2="14" y2="11" stroke="#00d4ff" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <h4 style="color: #00d4ff; font-size: 24px; font-weight: 700; margin-bottom: 12px;">
+                        No Results Found
+                    </h4>
+                    <p style="color: #9ca3af; font-size: 16px; margin-bottom: 8px;">
+                        No transactions match your search criteria.
+                    </p>
+                    <div style="margin-top: 20px; padding: 16px; background: rgba(0, 212, 255, 0.1); 
+                                border-radius: 12px; border: 1px solid rgba(0, 212, 255, 0.2);">
+                        <p style="color: #e5e7eb; font-size: 14px; margin-bottom: 6px;">
+                            <strong style="color: #00d4ff;">Search term:</strong> "${response.search_term}"
+                        </p>
+                        <p style="color: #e5e7eb; font-size: 14px;">
+                            <strong style="color: #00d4ff;">Search type:</strong> ${response.search_type}
+                        </p>
+                    </div>
                 </div>
             `);
         } else {
             // Create search results header
             content.append('div')
                 .attr('class', 'search-results-header')
+                .style('background', 'linear-gradient(135deg, rgba(0, 255, 135, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%)')
+                .style('border', '2px solid rgba(0, 255, 135, 0.3)')
+                .style('border-radius', '16px')
+                .style('padding', '20px 24px')
+                .style('margin-bottom', '24px')
+                .style('box-shadow', '0 4px 6px rgba(0, 0, 0, 0.2)')
                 .html(`
-                    <p><strong>Found ${response.results.length} transactions</strong></p>
-                    <p>Search: "${response.search_term}" in ${response.search_type}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 14px; color: #00ff87; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
+                                Search Results
+                            </div>
+                            <div style="font-size: 32px; font-weight: 800; color: #ffffff;">
+                                ${response.results.length} ${response.results.length === 1 ? 'Transaction' : 'Transactions'}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 4px;">
+                                Searched for
+                            </div>
+                            <div style="font-size: 16px; color: #00d4ff; font-weight: 600;">
+                                "${response.search_term}"
+                            </div>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">
+                                in ${response.search_type}
+                            </div>
+                        </div>
+                    </div>
                 `);
             
             // Create results container
             const resultsContainer = content.append('div')
-                .attr('class', 'search-results-container');
+                .attr('class', 'search-results-container')
+                .style('display', 'grid')
+                .style('gap', '20px')
+                .style('max-height', '600px')
+                .style('overflow-y', 'auto')
+                .style('padding-right', '8px');
             
             // Add each result
             response.results.forEach((result, index) => {
                 const resultDiv = resultsContainer.append('div')
                     .attr('class', 'search-result-item')
-                    .style('border', '1px solid var(--color-gray)')
-                    .style('border-radius', 'var(--radius-lg)')
-                    .style('padding', 'var(--space-4)')
-                    .style('margin-bottom', 'var(--space-3)')
-                    .style('background', 'rgba(255, 255, 255, 0.02)')
                     .style('cursor', 'pointer')
-                    .on('click', () => this.highlightSearchResult(result));
+                    .style('transition', 'all 0.3s ease')
+                    .on('click', () => this.highlightSearchResult(result))
+                    .on('mouseenter', function() {
+                        d3.select(this)
+                            .style('transform', 'translateY(-2px)')
+                            .style('box-shadow', '0 8px 20px rgba(0, 255, 135, 0.2)');
+                    })
+                    .on('mouseleave', function() {
+                        d3.select(this)
+                            .style('transform', 'translateY(0)')
+                            .style('box-shadow', '0 4px 6px rgba(0, 0, 0, 0.3)');
+                    });
                 
                 resultDiv.html(this.formatSearchResult(result, index + 1));
             });
@@ -669,58 +724,185 @@ class ChronosTimeline {
                               result.suspicious_score > 0.5 ? 'SUSPICIOUS' : 'NORMAL';
         const suspicionClass = suspicionLevel.toLowerCase();
         
+        // Risk badge styling
+        const riskColors = {
+            'CRITICAL': { bg: 'rgba(239, 68, 68, 0.15)', border: '#ef4444', text: '#fee2e2' },
+            'SUSPICIOUS': { bg: 'rgba(251, 146, 60, 0.15)', border: '#fb923c', text: '#fed7aa' },
+            'NORMAL': { bg: 'rgba(34, 197, 94, 0.15)', border: '#22c55e', text: '#bbf7d0' }
+        };
+        const riskStyle = riskColors[suspicionLevel];
+        
+        // Format transaction flow
+        const txFlow = `
+            <div style="display: flex; align-items: center; gap: 12px; margin: 16px 0;">
+                <div style="flex: 1; text-align: right;">
+                    <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px;">From</div>
+                    <div style="font-weight: 600; color: #00d4ff; font-size: 14px;">${result.from_account}</div>
+                </div>
+                <div style="flex-shrink: 0;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#00ff87" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; margin-bottom: 4px;">To</div>
+                    <div style="font-weight: 600; color: #00ff87; font-size: 14px;">${result.to_account}</div>
+                </div>
+            </div>
+        `;
+        
         return `
-            <div class="search-result-header">
-                <h5>#${index} - Transaction ${result.id}</h5>
-                <span class="suspicion-badge ${suspicionClass}">${suspicionLevel}</span>
-            </div>
-            <div class="search-result-details">
-                <div class="detail-row">
-                    <span class="detail-label">Amount:</span>
-                    <span class="detail-value">${formatCurrency(result.amount)}</span>
+            <div style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(16, 16, 32, 0.95) 100%); 
+                        border: 2px solid ${riskStyle.border}40; 
+                        border-radius: 16px; 
+                        overflow: hidden;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+                
+                <!-- Header Section -->
+                <div style="background: ${riskStyle.bg}; 
+                            border-bottom: 2px solid ${riskStyle.border}40; 
+                            padding: 16px 20px; 
+                            display: flex; 
+                            justify-content: space-between; 
+                            align-items: center;">
+                    <div>
+                        <div style="font-size: 12px; color: #9ca3af; font-weight: 500; margin-bottom: 4px;">
+                            Result #${index}
+                        </div>
+                        <div style="font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">
+                            ${result.id}
+                        </div>
+                    </div>
+                    <div style="background: ${riskStyle.bg}; 
+                                border: 2px solid ${riskStyle.border}; 
+                                padding: 8px 16px; 
+                                border-radius: 12px;
+                                box-shadow: 0 0 15px ${riskStyle.border}50;">
+                        <div style="font-size: 11px; color: ${riskStyle.text}; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                            ${suspicionLevel}
+                        </div>
+                        <div style="font-size: 18px; font-weight: 800; color: ${riskStyle.border}; margin-top: 2px;">
+                            ${(result.suspicious_score * 100).toFixed(1)}%
+                        </div>
+                    </div>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">Date:</span>
-                    <span class="detail-value">${formatDateTime(result.timestamp)}</span>
+                
+                <!-- Content Section -->
+                <div style="padding: 20px;">
+                    
+                    <!-- Amount Display (Prominent) -->
+                    <div style="text-align: center; padding: 24px 0; margin-bottom: 20px; 
+                                background: linear-gradient(135deg, rgba(0, 255, 135, 0.05) 0%, rgba(0, 212, 255, 0.05) 100%);
+                                border-radius: 12px; border: 1px solid rgba(0, 255, 135, 0.2);">
+                        <div style="font-size: 13px; color: #00ff87; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1.5px;">
+                            Transaction Amount
+                        </div>
+                        <div style="font-size: 36px; font-weight: 800; color: #ffffff; text-shadow: 0 0 20px rgba(0, 255, 135, 0.3);">
+                            ${formatCurrency(result.amount)}
+                        </div>
+                        <div style="font-size: 13px; color: #9ca3af; margin-top: 8px;">
+                            ${formatDateTime(result.timestamp)}
+                        </div>
+                    </div>
+                    
+                    <!-- Transaction Flow -->
+                    ${txFlow}
+                    
+                    <!-- Details Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
+                        
+                        <div style="background: rgba(0, 212, 255, 0.05); border: 1px solid rgba(0, 212, 255, 0.2); 
+                                    padding: 12px; border-radius: 10px;">
+                            <div style="font-size: 10px; color: #00d4ff; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; letter-spacing: 1px;">
+                                Type
+                            </div>
+                            <div style="font-size: 14px; color: #ffffff; font-weight: 600;">
+                                ${result.transaction_method || result.transaction_type || 'TRANSFER'}
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); 
+                                    padding: 12px; border-radius: 10px;">
+                            <div style="font-size: 10px; color: #a78bfa; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; letter-spacing: 1px;">
+                                Pattern
+                            </div>
+                            <div style="font-size: 14px; color: #ffffff; font-weight: 600; text-transform: capitalize;">
+                                ${result.pattern_type || 'Normal'}
+                            </div>
+                        </div>
+                        
+                        ${result.aadhar_location ? `
+                        <div style="background: rgba(251, 146, 60, 0.05); border: 1px solid rgba(251, 146, 60, 0.2); 
+                                    padding: 12px; border-radius: 10px; grid-column: 1 / -1;">
+                            <div style="font-size: 10px; color: #fb923c; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; letter-spacing: 1px;">
+                                Location
+                            </div>
+                            <div style="font-size: 14px; color: #ffffff; font-weight: 600;">
+                                ${result.aadhar_location.city}, ${result.aadhar_location.state}, ${result.aadhar_location.country}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${result.country_risk_level ? `
+                        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); 
+                                    padding: 12px; border-radius: 10px; grid-column: 1 / -1;">
+                            <div style="font-size: 10px; color: #ef4444; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; letter-spacing: 1px;">
+                                Country Risk
+                            </div>
+                            <div style="font-size: 14px; font-weight: 600;" 
+                                 style="color: ${result.country_risk_level.color || '#ffffff'}">
+                                ${result.country_risk_level.description}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${result.layering_analysis && result.layering_analysis.layer_3_integration ? `
+                        <div style="background: rgba(234, 88, 12, 0.05); border: 1px solid rgba(234, 88, 12, 0.2); 
+                                    padding: 12px; border-radius: 10px; grid-column: 1 / -1;">
+                            <div style="font-size: 10px; color: #ea580c; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; letter-spacing: 1px;">
+                                Threat Level
+                            </div>
+                            <div style="font-size: 14px; color: #ffffff; font-weight: 600; text-transform: uppercase;">
+                                ${result.layering_analysis.layer_3_integration.threat_level}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                    </div>
+                    
+                    ${result.scenario ? `
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(255, 255, 255, 0.02); 
+                                border-left: 3px solid #00ff87; border-radius: 8px;">
+                        <div style="font-size: 10px; color: #00ff87; text-transform: uppercase; font-weight: 600; margin-bottom: 6px; letter-spacing: 1px;">
+                            Scenario
+                        </div>
+                        <div style="font-size: 13px; color: #d1d5db; line-height: 1.6;">
+                            ${result.scenario}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <!-- Action Button -->
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                        <button onclick="event.stopPropagation(); window.TriNetra.getChronos().showDetailedAnalysis('${result.id}')"
+                                style="width: 100%; 
+                                       background: linear-gradient(135deg, #00ff87 0%, #00d4ff 100%); 
+                                       color: #0a0a0f; 
+                                       font-weight: 700; 
+                                       font-size: 14px;
+                                       text-transform: uppercase;
+                                       letter-spacing: 1px;
+                                       padding: 14px 24px; 
+                                       border: none; 
+                                       border-radius: 10px; 
+                                       cursor: pointer;
+                                       transition: all 0.3s ease;
+                                       box-shadow: 0 4px 15px rgba(0, 255, 135, 0.3);">
+                            View Detailed Analysis
+                        </button>
+                    </div>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">From:</span>
-                    <span class="detail-value">${result.from_account}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">To:</span>
-                    <span class="detail-value">${result.to_account}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Location:</span>
-                    <span class="detail-value">${result.aadhar_location ? 
-                        `${result.aadhar_location.city}, ${result.aadhar_location.state}, ${result.aadhar_location.country}` : 
-                        'Unknown'}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Method:</span>
-                    <span class="detail-value">${result.transaction_method}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Risk Score:</span>
-                    <span class="detail-value ${suspicionClass}">${(result.suspicious_score * 100).toFixed(1)}%</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Country Risk:</span>
-                    <span class="detail-value" style="color: ${result.country_risk_level.color}">
-                        ${result.country_risk_level.description}
-                    </span>
-                </div>
-                ${result.layering_analysis && result.layering_analysis.layer_3_integration ? 
-                    `<div class="detail-row">
-                        <span class="detail-label">Threat Level:</span>
-                        <span class="detail-value">${result.layering_analysis.layer_3_integration.threat_level}</span>
-                    </div>` : ''}
-            </div>
-            <div class="search-result-actions">
-                <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); window.TriNetra.getChronos().showDetailedAnalysis('${result.id}')">
-                    📊 Detailed Analysis
-                </button>
             </div>
         `;
     }
@@ -744,6 +926,29 @@ class ChronosTimeline {
     showDetailedAnalysis(transactionId) {
         const result = this.searchResults.find(r => r.id === transactionId);
         if (!result) return;
+
+        const previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        const closeModal = () => {
+            backdrop.remove();
+            analysisModal.remove();
+            document.body.style.overflow = previousBodyOverflow;
+            d3.select(window).on('keydown.analysis-modal', null);
+        };
+        
+        // Create backdrop
+        const backdrop = d3.select('body').append('div')
+            .attr('class', 'modal-backdrop')
+            .style('position', 'fixed')
+            .style('top', '0')
+            .style('left', '0')
+            .style('width', '100%')
+            .style('height', '100%')
+            .style('background', 'rgba(5, 8, 16, 0.92)')
+            .style('z-index', '9998')
+            .style('animation', 'fadeIn 0.3s ease')
+            .on('click', closeModal);
         
         // Create detailed analysis modal
         const analysisModal = d3.select('body').append('div')
@@ -752,135 +957,569 @@ class ChronosTimeline {
             .style('top', '50%')
             .style('left', '50%')
             .style('transform', 'translate(-50%, -50%)')
-            .style('background', 'var(--color-dark-light)')
-            .style('border', '1px solid var(--color-primary)')
-            .style('border-radius', 'var(--radius-xl)')
-            .style('padding', 'var(--space-8)')
-            .style('max-width', '900px')
-            .style('max-height', '80vh')
-            .style('overflow-y', 'auto')
-            .style('z-index', 'var(--z-modal)')
-            .style('box-shadow', 'var(--shadow-2xl)');
+            .style('background', '#0f1424')
+            .style('border', '2px solid rgba(0, 255, 135, 0.3)')
+            .style('border-radius', '24px')
+            .style('padding', '0')
+            .style('width', '90%')
+            .style('max-width', '1100px')
+            .style('max-height', '85vh')
+            .style('overflow', 'auto')
+            .style('z-index', '9999')
+            .style('box-shadow', '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 100px rgba(0, 255, 135, 0.2)')
+            .style('animation', 'slideIn 0.3s ease')
+            .on('click', function(event) {
+                event.stopPropagation();
+            });
         
         analysisModal.html(this.formatDetailedAnalysis(result));
         
         // Add close button functionality
         analysisModal.select('.close-analysis-modal')
-            .on('click', () => analysisModal.remove());
+            .on('click', closeModal);
+
+        d3.select(window).on('keydown.analysis-modal', (event) => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Add CSS animations if not exists
+        if (!document.getElementById('modal-animations')) {
+            const style = document.createElement('style');
+            style.id = 'modal-animations';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideIn {
+                    from { 
+                        opacity: 0; 
+                        transform: translate(-50%, -48%);
+                    }
+                    to { 
+                        opacity: 1; 
+                        transform: translate(-50%, -50%);
+                    }
+                }
+                .analysis-modal {
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(0, 255, 135, 0.5) rgba(255, 255, 255, 0.08);
+                }
+                .analysis-modal::-webkit-scrollbar {
+                    width: 10px;
+                }
+                .analysis-modal::-webkit-scrollbar-track {
+                    background: rgba(255, 255, 255, 0.08);
+                    border-radius: 8px;
+                }
+                .analysis-modal::-webkit-scrollbar-thumb {
+                    background: rgba(0, 255, 135, 0.5);
+                    border-radius: 8px;
+                }
+                .analysis-hero-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                    gap: 14px;
+                    margin-bottom: 28px;
+                }
+                .analysis-flow-grid {
+                    display: grid;
+                    grid-template-columns: 1fr auto 1fr;
+                    align-items: center;
+                    gap: 24px;
+                }
+                .analysis-details-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 24px;
+                    margin-bottom: 32px;
+                }
+                @media (max-width: 1024px) {
+                    .analysis-hero-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .analysis-flow-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .analysis-details-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
 
     formatDetailedAnalysis(result) {
+        const suspicionLevel = result.suspicious_score > 0.8 ? 'CRITICAL' : 
+                              result.suspicious_score > 0.5 ? 'SUSPICIOUS' : 'NORMAL';
+        
+        const riskColors = {
+            'CRITICAL': { bg: '#ef4444', text: '#fee2e2', glow: 'rgba(239, 68, 68, 0.4)' },
+            'SUSPICIOUS': { bg: '#fb923c', text: '#fed7aa', glow: 'rgba(251, 146, 60, 0.4)' },
+            'NORMAL': { bg: '#22c55e', text: '#bbf7d0', glow: 'rgba(34, 197, 94, 0.4)' }
+        };
+        const riskStyle = riskColors[suspicionLevel];
+        
         return `
-            <div class="analysis-modal-header">
-                <h3>🔍 Detailed Transaction Analysis</h3>
-                <button class="close-analysis-modal" style="float: right; background: none; border: none; color: var(--color-light); font-size: 24px; cursor: pointer;">&times;</button>
+            <!-- Modal Header -->
+            <div style="background: linear-gradient(135deg, rgba(0, 255, 135, 0.16) 0%, rgba(0, 212, 255, 0.14) 100%);
+                        border-bottom: 2px solid rgba(0, 255, 135, 0.3);
+                        padding: 24px 32px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;">
+                <div>
+                    <div style="font-size: 14px; color: #00ff87; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">
+                        Transaction Analysis
+                    </div>
+                    <h3 style="font-size: 28px; font-weight: 800; color: #ffffff; margin: 0;">
+                        ${result.id}
+                    </h3>
+                </div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="background: ${riskStyle.bg}20; 
+                                border: 2px solid ${riskStyle.bg}; 
+                                padding: 12px 20px; 
+                                border-radius: 12px;
+                                text-align: center;
+                                box-shadow: 0 0 20px ${riskStyle.glow};">
+                        <div style="font-size: 11px; color: ${riskStyle.text}; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                            ${suspicionLevel}
+                        </div>
+                        <div style="font-size: 24px; font-weight: 800; color: ${riskStyle.bg}; margin-top: 4px;">
+                            ${(result.suspicious_score * 100).toFixed(1)}%
+                        </div>
+                    </div>
+                    <button class="close-analysis-modal" 
+                            style="background: rgba(239, 68, 68, 0.1); 
+                                   border: 2px solid #ef4444; 
+                                   color: #ef4444; 
+                                   width: 44px;
+                                   height: 44px;
+                                   border-radius: 12px;
+                                   font-size: 28px; 
+                                   font-weight: 300;
+                                   cursor: pointer;
+                                   display: flex;
+                                   align-items: center;
+                                   justify-content: center;
+                                   transition: all 0.2s ease;"
+                            onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.transform='scale(1.05)'"
+                            onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.transform='scale(1)'">
+                        ×
+                    </button>
+                </div>
             </div>
-            <div class="analysis-content">
-                <div class="analysis-section">
-                    <h4>📊 Basic Information</h4>
-                    <div class="analysis-grid">
-                        <div class="analysis-item">
-                            <strong>Transaction ID:</strong> ${result.id}
+            
+            <!-- Modal Content -->
+            <div style="padding: 32px;">
+                
+                <!-- Quick Summary -->
+                <div class="analysis-hero-grid">
+                    <div style="background: rgba(17, 24, 39, 0.95); border: 1px solid rgba(0, 255, 135, 0.25); border-radius: 14px; padding: 16px 18px;">
+                        <div style="font-size: 11px; color: #00ff87; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Risk Score</div>
+                        <div style="font-size: 24px; color: #ffffff; font-weight: 800;">${(result.suspicious_score * 100).toFixed(1)}%</div>
+                    </div>
+                    <div style="background: rgba(17, 24, 39, 0.95); border: 1px solid rgba(0, 212, 255, 0.25); border-radius: 14px; padding: 16px 18px;">
+                        <div style="font-size: 11px; color: #00d4ff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Transaction Type</div>
+                        <div style="font-size: 20px; color: #ffffff; font-weight: 700; text-transform: capitalize;">${result.transaction_method || result.transaction_type || 'Transfer'}</div>
+                    </div>
+                    <div style="background: rgba(17, 24, 39, 0.95); border: 1px solid rgba(251, 146, 60, 0.25); border-radius: 14px; padding: 16px 18px;">
+                        <div style="font-size: 11px; color: #fb923c; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Pattern Type</div>
+                        <div style="font-size: 20px; color: #ffffff; font-weight: 700; text-transform: capitalize;">${result.pattern_type || 'Normal'}</div>
+                    </div>
+                </div>
+                
+                <!-- Amount Hero Section -->
+                <div style="text-align: center; 
+                            padding: 48px 32px; 
+                            margin-bottom: 32px;
+                            background: linear-gradient(135deg, rgba(0, 255, 135, 0.14) 0%, rgba(0, 212, 255, 0.12) 100%);
+                            border: 2px solid rgba(0, 255, 135, 0.3);
+                            border-radius: 20px;
+                            box-shadow: 0 0 40px rgba(0, 255, 135, 0.1);">
+                    <div style="font-size: 14px; color: #00ff87; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;">
+                        Transaction Amount
+                    </div>
+                    <div style="font-size: 56px; font-weight: 900; color: #ffffff; text-shadow: 0 0 30px rgba(0, 255, 135, 0.5); margin-bottom: 12px;">
+                        ${formatCurrency(result.amount)}
+                    </div>
+                    <div style="font-size: 16px; color: #9ca3af;">
+                        ${formatDateTime(result.timestamp)}
+                    </div>
+                </div>
+                
+                <!-- Transaction Flow Visual -->
+                <div style="margin-bottom: 32px; 
+                            padding: 32px; 
+                            background: rgba(17, 24, 39, 0.92);
+                            border: 2px solid rgba(0, 212, 255, 0.2);
+                            border-radius: 20px;">
+                    <div style="font-size: 14px; color: #00d4ff; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 24px; text-align: center;">
+                        Transaction Flow
+                    </div>
+                    <div class="analysis-flow-grid">
+                        <div style="flex: 1; text-align: center;">
+                            <div style="background: rgba(0, 212, 255, 0.15); 
+                                        border: 2px solid #00d4ff; 
+                                        padding: 24px; 
+                                        border-radius: 16px;">
+                                <div style="font-size: 12px; color: #00d4ff; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;">
+                                    Source Account
+                                </div>
+                                <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
+                                    ${result.from_account}
+                                </div>
+                                ${result.bank_details && result.bank_details.bank_name ? `
+                                <div style="font-size: 13px; color: #9ca3af; margin-top: 8px;">
+                                    ${result.bank_details.bank_name}
+                                </div>
+                                <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+                                    ${result.bank_details.ifsc_code || 'N/A'}
+                                </div>
+                                ` : ''}
+                            </div>
                         </div>
-                        <div class="analysis-item">
-                            <strong>Amount:</strong> ${formatCurrency(result.amount)}
+                        
+                        <div style="flex-shrink: 0;">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#00ff87" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
                         </div>
-                        <div class="analysis-item">
-                            <strong>Date & Time:</strong> ${formatDateTime(result.timestamp)}
-                        </div>
-                        <div class="analysis-item">
-                            <strong>Method:</strong> ${result.transaction_method}
+                        
+                        <div style="flex: 1; text-align: center;">
+                            <div style="background: rgba(0, 255, 135, 0.15); 
+                                        border: 2px solid #00ff87; 
+                                        padding: 24px; 
+                                        border-radius: 16px;">
+                                <div style="font-size: 12px; color: #00ff87; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;">
+                                    Destination Account
+                                </div>
+                                <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
+                                    ${result.to_account}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="analysis-section">
-                    <h4>🏦 Account Details</h4>
-                    <div class="analysis-grid">
-                        <div class="analysis-item">
-                            <strong>From Account:</strong> ${result.from_account}
-                        </div>
-                        <div class="analysis-item">
-                            <strong>To Account:</strong> ${result.to_account}
-                        </div>
-                        <div class="analysis-item">
-                            <strong>Bank:</strong> ${result.bank_details.bank_name || 'Unknown'}
-                        </div>
-                        <div class="analysis-item">
-                            <strong>IFSC Code:</strong> ${result.bank_details.ifsc_code || 'Unknown'}
+                <!-- Details Grid -->
+                <div class="analysis-details-grid">
+                    
+                    <!-- Transaction Details Card -->
+                    <div style="background: rgba(17, 24, 39, 0.92);
+                                border: 2px solid rgba(139, 92, 246, 0.3);
+                                border-radius: 20px;
+                                padding: 24px;">
+                        <h4 style="font-size: 16px; color: #a78bfa; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(139, 92, 246, 0.2);">
+                            Transaction Details
+                        </h4>
+                        <div style="space-y: 16px;">
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                    Transaction Type
+                                </div>
+                                <div style="font-size: 16px; color: #ffffff; font-weight: 600;">
+                                    ${result.transaction_method || result.transaction_type || 'TRANSFER'}
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                    Pattern Type
+                                </div>
+                                <div style="font-size: 16px; color: #ffffff; font-weight: 600; text-transform: capitalize;">
+                                    ${result.pattern_type || 'Normal'}
+                                </div>
+                            </div>
+                            ${result.scenario ? `
+                            <div>
+                                <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                    Scenario
+                                </div>
+                                <div style="font-size: 14px; color: #d1d5db; line-height: 1.6;">
+                                    ${result.scenario}
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
-                </div>
-                
-                <div class="analysis-section">
-                    <h4>📍 Location Analysis</h4>
-                    <div class="analysis-grid">
-                        <div class="analysis-item">
-                            <strong>City:</strong> ${result.aadhar_location.city || 'Unknown'}
-                        </div>
-                        <div class="analysis-item">
-                            <strong>State/Region:</strong> ${result.aadhar_location.state || 'Unknown'}
-                        </div>
-                        <div class="analysis-item">
-                            <strong>Country:</strong> ${result.aadhar_location.country || 'Unknown'}
-                        </div>
-                        <div class="analysis-item">
-                            <strong>Country Risk:</strong> 
-                            <span style="color: ${result.country_risk_level.color}">
-                                ${result.country_risk_level.description}
-                            </span>
+                    
+                    <!-- Location Details Card -->
+                    ${result.aadhar_location ? `
+                    <div style="background: rgba(17, 24, 39, 0.92);
+                                border: 2px solid rgba(251, 146, 60, 0.3);
+                                border-radius: 20px;
+                                padding: 24px;">
+                        <h4 style="font-size: 16px; color: #fb923c; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(251, 146, 60, 0.2);">
+                            Location Analysis
+                        </h4>
+                        <div style="space-y: 16px;">
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                    City
+                                </div>
+                                <div style="font-size: 16px; color: #ffffff; font-weight: 600;">
+                                    ${result.aadhar_location.city || 'Unknown'}
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                    State / Region
+                                </div>
+                                <div style="font-size: 16px; color: #ffffff; font-weight: 600;">
+                                    ${result.aadhar_location.state || 'Unknown'}
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                    Country
+                                </div>
+                                <div style="font-size: 16px; color: #ffffff; font-weight: 600;">
+                                    ${result.aadhar_location.country || 'Unknown'}
+                                </div>
+                            </div>
+                            ${result.country_risk_level ? `
+                            <div style="padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px;">
+                                <div style="font-size: 11px; color: #ef4444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+                                    Country Risk
+                                </div>
+                                <div style="font-size: 14px; font-weight: 600; color: ${result.country_risk_level.color || '#ffffff'};">
+                                    ${result.country_risk_level.description}
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
+                    ` : ''}
+                    
                 </div>
                 
-                <div class="analysis-section">
-                    <h4>🔍 Layering Analysis</h4>
+                <!-- Layering Analysis Section -->
+                ${result.layering_analysis ? `
+                <div style="background: rgba(17, 24, 39, 0.92);
+                            border: 2px solid rgba(234, 88, 12, 0.3);
+                            border-radius: 20px;
+                            padding: 24px;
+                            margin-bottom: 24px;">
+                    <h4 style="font-size: 16px; color: #ea580c; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid rgba(234, 88, 12, 0.2);">
+                        Layering Analysis
+                    </h4>
                     ${this.formatLayeringAnalysis(result.layering_analysis)}
                 </div>
+                ` : ''}
                 
-                <div class="analysis-section">
-                    <h4>⚠️ Risk Assessment</h4>
-                    <div class="risk-assessment">
-                        <div class="risk-score" style="color: ${result.suspicious_score > 0.8 ? '#ff4444' : 
-                                                             result.suspicious_score > 0.5 ? '#ffaa00' : '#44ff44'}">
-                            Risk Score: ${(result.suspicious_score * 100).toFixed(1)}%
-                        </div>
-                        <div class="risk-level">
-                            Threat Level: ${result.layering_analysis.layer_3_integration?.threat_level || 'LOW'}
-                        </div>
-                    </div>
-                </div>
             </div>
         `;
     }
 
     formatLayeringAnalysis(layering) {
-        if (!layering) return '<p>No layering analysis available</p>';
+        if (!layering) return '<p style="color: #9ca3af; text-align: center; padding: 20px;">No layering analysis available</p>';
         
         return `
-            <div class="layering-layers">
-                <div class="layer-item">
-                    <h5>Layer 1: ${layering.layer_1_extraction?.description || 'Data Extraction'}</h5>
-                    <ul>
-                        ${(layering.layer_1_extraction?.patterns_detected || []).map(p => `<li>${p}</li>`).join('')}
-                        ${(layering.layer_1_extraction?.risk_indicators || []).map(r => `<li style="color: #ffaa00">${r}</li>`).join('')}
-                    </ul>
+            <div style="display: grid; gap: 20px;">
+                <!-- Layer 1 -->
+                <div style="background: rgba(59, 130, 246, 0.08); 
+                            border-left: 4px solid #3b82f6; 
+                            padding: 20px; 
+                            border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="background: rgba(59, 130, 246, 0.2); 
+                                    color: #3b82f6; 
+                                    width: 36px; 
+                                    height: 36px; 
+                                    border-radius: 10px; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    font-weight: 800; 
+                                    font-size: 18px;
+                                    border: 2px solid #3b82f6;">
+                            1
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 700; color: #3b82f6; text-transform: uppercase; letter-spacing: 1px;">
+                                Layer 1: Data Extraction
+                            </div>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 2px;">
+                                ${layering.layer_1_extraction?.description || 'Pattern Detection & Data Extraction'}
+                            </div>
+                        </div>
+                    </div>
+                    ${layering.layer_1_extraction && (layering.layer_1_extraction.patterns_detected?.length || layering.layer_1_extraction.risk_indicators?.length) ? `
+                    <div style="margin-left: 48px;">
+                        ${layering.layer_1_extraction.patterns_detected && layering.layer_1_extraction.patterns_detected.length > 0 ? `
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-size: 11px; color: #60a5fa; font-weight: 600; text-transform: uppercase; margin-bottom: 8px;">
+                                Patterns Detected
+                            </div>
+                            ${layering.layer_1_extraction.patterns_detected.map(p => `
+                                <div style="padding: 8px 12px; 
+                                            background: rgba(59, 130, 246, 0.1); 
+                                            border-left: 2px solid #60a5fa; 
+                                            margin-bottom: 6px; 
+                                            border-radius: 6px; 
+                                            font-size: 13px; 
+                                            color: #e5e7eb;">
+                                    • ${p}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                        ${layering.layer_1_extraction.risk_indicators && layering.layer_1_extraction.risk_indicators.length > 0 ? `
+                        <div>
+                            <div style="font-size: 11px; color: #fb923c; font-weight: 600; text-transform: uppercase; margin-bottom: 8px;">
+                                Risk Indicators
+                            </div>
+                            ${layering.layer_1_extraction.risk_indicators.map(r => `
+                                <div style="padding: 8px 12px; 
+                                            background: rgba(251, 146, 60, 0.1); 
+                                            border-left: 2px solid #fb923c; 
+                                            margin-bottom: 6px; 
+                                            border-radius: 6px; 
+                                            font-size: 13px; 
+                                            color: #fed7aa;">
+                                    ⚠ ${r}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : '<div style="margin-left: 48px; color: #6b7280; font-size: 13px;">No patterns detected</div>'}
                 </div>
-                <div class="layer-item">
-                    <h5>Layer 2: ${layering.layer_2_processing?.description || 'Pattern Processing'}</h5>
-                    <ul>
-                        <li>Connected Accounts: ${layering.layer_2_processing?.connected_accounts || 0}</li>
-                        ${(layering.layer_2_processing?.temporal_patterns || []).map(p => `<li>${p}</li>`).join('')}
-                        ${(layering.layer_2_processing?.amount_patterns || []).map(p => `<li>${p}</li>`).join('')}
-                    </ul>
+                
+                <!-- Layer 2 -->
+                <div style="background: rgba(139, 92, 246, 0.08); 
+                            border-left: 4px solid #8b5cf6; 
+                            padding: 20px; 
+                            border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="background: rgba(139, 92, 246, 0.2); 
+                                    color: #8b5cf6; 
+                                    width: 36px; 
+                                    height: 36px; 
+                                    border-radius: 10px; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    font-weight: 800; 
+                                    font-size: 18px;
+                                    border: 2px solid #8b5cf6;">
+                            2
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 700; color: #8b5cf6; text-transform: uppercase; letter-spacing: 1px;">
+                                Layer 2: Pattern Processing
+                            </div>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 2px;">
+                                ${layering.layer_2_processing?.description || 'Pattern Analysis & Connection Mapping'}
+                            </div>
+                        </div>
+                    </div>
+                    ${layering.layer_2_processing ? `
+                    <div style="margin-left: 48px; display: grid; gap: 12px;">
+                        ${layering.layer_2_processing.connected_accounts !== undefined ? `
+                        <div style="padding: 12px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.3);">
+                            <div style="font-size: 11px; color: #a78bfa; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">
+                                Connected Accounts
+                            </div>
+                            <div style="font-size: 20px; font-weight: 800; color: #8b5cf6;">
+                                ${layering.layer_2_processing.connected_accounts}
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${layering.layer_2_processing.temporal_patterns && layering.layer_2_processing.temporal_patterns.length > 0 ? `
+                        <div>
+                            <div style="font-size: 11px; color: #a78bfa; font-weight: 600; text-transform: uppercase; margin-bottom: 8px;">
+                                Temporal Patterns
+                            </div>
+                            ${layering.layer_2_processing.temporal_patterns.map(p => `
+                                <div style="padding: 8px 12px; background: rgba(139, 92, 246, 0.1); border-left: 2px solid #a78bfa; margin-bottom: 6px; border-radius: 6px; font-size: 13px; color: #e5e7eb;">
+                                    • ${p}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                        ${layering.layer_2_processing.amount_patterns && layering.layer_2_processing.amount_patterns.length > 0 ? `
+                        <div>
+                            <div style="font-size: 11px; color: #a78bfa; font-weight: 600; text-transform: uppercase; margin-bottom: 8px;">
+                                Amount Patterns
+                            </div>
+                            ${layering.layer_2_processing.amount_patterns.map(p => `
+                                <div style="padding: 8px 12px; background: rgba(139, 92, 246, 0.1); border-left: 2px solid #a78bfa; margin-bottom: 6px; border-radius: 6px; font-size: 13px; color: #e5e7eb;">
+                                    • ${p}
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : '<div style="margin-left: 48px; color: #6b7280; font-size: 13px;">No processing data available</div>'}
                 </div>
-                <div class="layer-item">
-                    <h5>Layer 3: ${layering.layer_3_integration?.description || 'Integration Analysis'}</h5>
-                    <ul>
-                        <li>Threat Level: <strong>${layering.layer_3_integration?.threat_level || 'LOW'}</strong></li>
-                        <li>Geolocation Risk: ${layering.layer_3_integration?.geolocation_risk || 'NORMAL'}</li>
-                        <li>Confidence: ${((layering.layer_3_integration?.pattern_match_confidence || 0) * 100).toFixed(1)}%</li>
-                    </ul>
+                
+                <!-- Layer 3 -->
+                <div style="background: rgba(234, 88, 12, 0.08); 
+                            border-left: 4px solid #ea580c; 
+                            padding: 20px; 
+                            border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="background: rgba(234, 88, 12, 0.2); 
+                                    color: #ea580c; 
+                                    width: 36px; 
+                                    height: 36px; 
+                                    border-radius: 10px; 
+                                    display: flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    font-weight: 800; 
+                                    font-size: 18px;
+                                    border: 2px solid #ea580c;">
+                            3
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 700; color: #ea580c; text-transform: uppercase; letter-spacing: 1px;">
+                                Layer 3: Integration Analysis
+                            </div>
+                            <div style="font-size: 12px; color: #9ca3af; margin-top: 2px;">
+                                ${layering.layer_3_integration?.description || 'Threat Assessment & Risk Integration'}
+                            </div>
+                        </div>
+                    </div>
+                    ${layering.layer_3_integration ? `
+                    <div style="margin-left: 48px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        ${layering.layer_3_integration.threat_level ? `
+                        <div style="padding: 16px; background: rgba(239, 68, 68, 0.1); border-radius: 10px; border: 2px solid rgba(239, 68, 68, 0.3); text-align: center;">
+                            <div style="font-size: 10px; color: #fca5a5; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">
+                                Threat Level
+                            </div>
+                            <div style="font-size: 18px; font-weight: 800; color: #ef4444; text-transform: uppercase;">
+                                ${layering.layer_3_integration.threat_level}
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${layering.layer_3_integration.geolocation_risk ? `
+                        <div style="padding: 16px; background: rgba(251, 146, 60, 0.1); border-radius: 10px; border: 2px solid rgba(251, 146, 60, 0.3); text-align: center;">
+                            <div style="font-size: 10px; color: #fdba74; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">
+                                Geo Risk
+                            </div>
+                            <div style="font-size: 18px; font-weight: 800; color: #fb923c; text-transform: uppercase;">
+                                ${layering.layer_3_integration.geolocation_risk}
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${layering.layer_3_integration.pattern_match_confidence !== undefined ? `
+                        <div style="padding: 16px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; border: 2px solid rgba(139, 92, 246, 0.3); text-align: center;">
+                            <div style="font-size: 10px; color: #c4b5fd; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;">
+                                Confidence
+                            </div>
+                            <div style="font-size: 18px; font-weight: 800; color: #8b5cf6;">
+                                ${(layering.layer_3_integration.pattern_match_confidence * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : '<div style="margin-left: 48px; color: #6b7280; font-size: 13px;">No integration data available</div>'}
                 </div>
             </div>
         `;
@@ -1453,7 +2092,7 @@ class ChronosTimeline {
         const infoPanel = d3.select(`#${this.containerId} .timeline-info`);
         if (!infoPanel.empty()) {
             infoPanel.html(`
-                <h4>⚠️ No Data Available</h4>
+                <h4>[WARN] No Data Available</h4>
                 <p>No transaction data found for the selected scenario. Please try a different filter or check the data source.</p>
             `);
         }
@@ -1942,7 +2581,7 @@ class ChronosTimeline {
         } else {
             this.isPlaying = false;
             this.updateButtonStates();
-            console.log('✅ CHRONOS: Animation completed');
+            console.log('[SUCCESS] CHRONOS: Animation completed');
             showNotification('Timeline animation completed', 'success');
             // Reset for replay
             this.currentFrame = 0;
@@ -1951,7 +2590,7 @@ class ChronosTimeline {
 
     updateAnimationProgress(visibleCount) {
         if (!this.data || this.data.length === 0) {
-            console.log('⚠️ CHRONOS: No data available for progress update');
+            console.log('[WARN] CHRONOS: No data available for progress update');
             return;
         }
         
@@ -2021,7 +2660,7 @@ class ChronosTimeline {
 
     renderNetwork() {
         if (!this.data.length) {
-            console.log('⚠️ CHRONOS: No data available for network view');
+            console.log('[WARN] CHRONOS: No data available for network view');
             return;
         }
 
@@ -2308,39 +2947,175 @@ class ChronosTimeline {
         const infoContainer = document.getElementById('timeline-info');
         if (!infoContainer || !node) return;
 
+        if (!document.getElementById('chronos-network-info-styles')) {
+            const style = document.createElement('style');
+            style.id = 'chronos-network-info-styles';
+            style.textContent = `
+                .chronos-network-panel {
+                    background: rgba(15, 20, 36, 0.95);
+                    border: 1px solid rgba(0, 206, 209, 0.3);
+                    border-radius: 14px;
+                    padding: 18px;
+                }
+                .chronos-network-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 14px;
+                    padding-bottom: 12px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+                }
+                .chronos-network-metrics {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 12px;
+                    margin-top: 12px;
+                }
+                .chronos-network-metric {
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 10px;
+                    padding: 12px;
+                }
+                .chronos-network-actions {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    margin-top: 16px;
+                }
+                .chronos-network-btn {
+                    min-height: 42px;
+                    padding: 0 16px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.25);
+                    background: rgba(255, 255, 255, 0.06);
+                    color: #e5e7eb;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .chronos-network-btn:hover {
+                    background: rgba(255, 255, 255, 0.12);
+                    transform: translateY(-1px);
+                }
+                .chronos-network-btn:focus-visible {
+                    outline: 2px solid #00d4ff;
+                    outline-offset: 2px;
+                }
+                .chronos-network-btn-primary {
+                    background: rgba(0, 255, 135, 0.18);
+                    border-color: rgba(0, 255, 135, 0.6);
+                    color: #00ff87;
+                }
+                .chronos-network-btn-primary:hover {
+                    background: rgba(0, 255, 135, 0.28);
+                }
+                .chronos-risk-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 5px 10px;
+                    border-radius: 999px;
+                    font-size: 11px;
+                    font-weight: 700;
+                    letter-spacing: 0.6px;
+                    text-transform: uppercase;
+                }
+                @media (max-width: 768px) {
+                    .chronos-network-metrics {
+                        grid-template-columns: 1fr;
+                    }
+                    .chronos-network-actions .chronos-network-btn {
+                        width: 100%;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        const connectedAccounts = this.getConnectedAccounts(node);
+        const txCount = node.transactions ? node.transactions.length : 0;
+        const riskLabel = node.suspicious ? 'High Risk' : 'Normal Risk';
+        const riskColor = node.suspicious ? '#ef4444' : '#22c55e';
+        const riskBg = node.suspicious ? 'rgba(239, 68, 68, 0.18)' : 'rgba(34, 197, 94, 0.18)';
+        const typeLabel = (node.type || 'unknown').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        const nodeIdDisplay = String(node.id || 'N/A');
+        const shortNodeId = nodeIdDisplay.length > 24 ? `${nodeIdDisplay.slice(0, 12)}...${nodeIdDisplay.slice(-8)}` : nodeIdDisplay;
+        const connectionsPreview = connectedAccounts.slice(0, 3).map((acc) => acc.id).join(', ');
+
         infoContainer.innerHTML = `
-            <h4>🕸️ Network Node Details</h4>
-            <div class="network-details">
-                <div class="detail-item">
-                    <div class="detail-label">Node ID</div>
-                    <div class="detail-value">${node.id}</div>
+            <div class="chronos-network-panel" role="region" aria-label="Network Node Details">
+                <div class="chronos-network-header">
+                    <div>
+                        <h4 style="margin: 0; font-size: 18px; color: #00d4ff; font-weight: 700;">Network Node Details</h4>
+                        <p style="margin: 6px 0 0 0; font-size: 13px; color: #9ca3af;">Selected account overview and quick actions</p>
+                    </div>
+                    <span class="chronos-risk-pill" style="color: ${riskColor}; border: 1px solid ${riskColor}; background: ${riskBg};">${riskLabel}</span>
                 </div>
-                <div class="detail-item">
-                    <div class="detail-label">Type</div>
-                    <div class="detail-value">${node.type}</div>
+
+                <div style="background: rgba(0, 212, 255, 0.08); border: 1px solid rgba(0, 212, 255, 0.28); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+                    <div style="font-size: 11px; color: #7dd3fc; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">Node Identifier</div>
+                    <div title="${nodeIdDisplay}" style="font-size: 16px; color: #ffffff; font-weight: 700; word-break: break-all;">${shortNodeId}</div>
                 </div>
-                <div class="detail-item">
-                    <div class="detail-label">Transactions</div>
-                    <div class="detail-value">${node.transactions ? node.transactions.length : 0}</div>
+
+                <div class="chronos-network-metrics">
+                    <div class="chronos-network-metric">
+                        <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">Node Type</div>
+                        <div style="font-size: 16px; color: #ffffff; font-weight: 700;">${typeLabel}</div>
+                    </div>
+                    <div class="chronos-network-metric">
+                        <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">Transactions</div>
+                        <div style="font-size: 16px; color: #ffffff; font-weight: 700;">${txCount}</div>
+                    </div>
+                    <div class="chronos-network-metric">
+                        <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">Connected Accounts</div>
+                        <div style="font-size: 16px; color: #ffffff; font-weight: 700;">${connectedAccounts.length}</div>
+                    </div>
+                    <div class="chronos-network-metric">
+                        <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">Connection Snapshot</div>
+                        <div style="font-size: 13px; color: #d1d5db; line-height: 1.4;">${connectionsPreview || 'No connected accounts found'}</div>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <div class="detail-label">Risk Level</div>
-                    <div class="detail-value">${node.suspicious ? 'High' : 'Normal'}</div>
+
+                <div style="margin-top: 14px; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px;">How to read this</div>
+                    <div style="font-size: 13px; color: #d1d5db; line-height: 1.5;">
+                        High risk means this node is linked with suspicious patterns. Use Open Full Network to inspect all direct paths and neighbors.
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <div class="detail-label">Connected Accounts</div>
-                    <div class="detail-value">${this.getConnectedAccounts(node).length}</div>
+
+                <div class="chronos-network-actions">
+                    <button id="chronos-clear-selection-btn" class="chronos-network-btn" type="button">Clear Selection</button>
+                    <button id="chronos-open-network-btn" class="chronos-network-btn chronos-network-btn-primary" type="button">Open Full Network</button>
                 </div>
-            </div>
-            <div class="network-actions">
-                <button onclick="window.TriNetra.getChronos().clearSelection()" class="control-button" style="margin-right: 10px;">
-                    Clear Selection
-                </button>
-                <button onclick="window.TriNetra.getChronos().showNetworkOverview()" class="control-button" style="background: rgba(0, 255, 135, 0.2); border: 1px solid #00ff87; color: #00ff87;">
-                    🕸️ Open Full Network
-                </button>
             </div>
         `;
+
+        const clearButton = infoContainer.querySelector('#chronos-clear-selection-btn');
+        const openButton = infoContainer.querySelector('#chronos-open-network-btn');
+
+        if (clearButton) {
+            clearButton.addEventListener('click', () => this.clearSelection());
+            clearButton.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.clearSelection();
+                }
+            });
+        }
+
+        if (openButton) {
+            openButton.addEventListener('click', () => this.showNetworkOverview());
+            openButton.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    this.showNetworkOverview();
+                }
+            });
+        }
     }
 
     getConnectedAccounts(node) {

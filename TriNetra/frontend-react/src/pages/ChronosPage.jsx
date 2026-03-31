@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Layout/Navbar.jsx'
 import ProgressFlow from '../components/shared/ProgressFlow.jsx'
 import NotificationToast, { notify } from '../components/shared/NotificationToast.jsx'
+import { Icon } from '../components/Icons/IconSystem'
 import TimelineView from '../components/Chronos/TimelineView.jsx'
 import PlaybackControls from '../components/Chronos/PlaybackControls.jsx'
 import AIInsightsPanel from '../components/Chronos/AIInsightsPanel.jsx'
@@ -18,6 +19,8 @@ export default function ChronosPage() {
   const [insights, setInsights] = useState([])
   const [insightsLoading, setInsightsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [importing, setImporting] = useState(false)
+  const fileInputRef = useRef(null)
 
   /* ── Handlers ── */
   const handleTimeQuantumChange = async (e) => {
@@ -138,16 +141,77 @@ export default function ChronosPage() {
     timelineRef.current?.exportReport()
   }
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.endsWith('.csv')) {
+      notify('Please upload a CSV file', 'error')
+      return
+    }
+
+    setImporting(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('http://localhost:5001/api/import/csv', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        notify(`✅ Imported ${data.inserted} transactions successfully!`, 'success')
+        // Refresh timeline
+        timelineRef.current?.refresh?.()
+      } else {
+        const errorMsg = data.errors ? data.errors.join(', ') : data.message
+        notify(`Import failed: ${errorMsg}`, 'error')
+      }
+    } catch (error) {
+      notify('Failed to upload file. Please try again.', 'error')
+      console.error('[ERROR] Import failed:', error)
+    } finally {
+      setImporting(false)
+      // Reset file input
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/import/template')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'transaction_import_template.csv'
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      notify('Template downloaded', 'success')
+    } catch (error) {
+      notify('Failed to download template', 'error')
+    }
+  }
+
   return (
     <div className="text-white">
-      <Navbar pageTitle="CHRONOS" pageIcon="🕐" pageTitleColor="text-[#00ff87]" />
+      <Navbar pageTitle="CHRONOS" pageIcon={<Icon name="Clock" size={24} className="text-[#00ff87]" />} pageTitleColor="text-[#00ff87]" />
       <NotificationToast />
 
       <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-[#00ff87] to-[#00d4ff] rounded-full flex items-center justify-center text-4xl animate-[glow_2s_ease-in-out_infinite_alternate]">
-            🕐
+            <Icon name="Clock" size={48} className="text-white" />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-[#00ff87] to-[#00d4ff] bg-clip-text text-transparent">
             CHRONOS Timeline
@@ -232,10 +296,40 @@ export default function ChronosPage() {
               <label className="block text-sm font-medium text-gray-300">Export Results</label>
               <button
                 onClick={handleExport}
-                className="w-full px-4 py-2 bg-[#20B2AA] hover:bg-[#20B2AA]/80 text-white rounded-lg transition-all uppercase text-sm font-semibold tracking-wide"
+                className="w-full px-4 py-2 bg-[#20B2AA] hover:bg-[#20B2AA]/80 text-white rounded-lg transition-all uppercase text-sm font-semibold tracking-wide flex items-center justify-center gap-2"
               >
-                Export Report
+                <Icon name="Download" size={16} />
+                <span>Export Report</span>
               </button>
+            </div>
+
+            {/* Import */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">Import Data</label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept=".csv"
+                className="hidden"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleImportClick}
+                  disabled={importing}
+                  className="flex-1 px-4 py-2 bg-[#00ff87] hover:bg-[#00ff87]/80 text-[#0a0a0f] rounded-lg transition-all uppercase text-sm font-semibold tracking-wide flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Icon name={importing ? "RefreshCw" : "Upload"} size={16} className={importing ? "animate-spin" : ""} />
+                  <span>{importing ? 'Importing...' : 'Import CSV'}</span>
+                </button>
+                <button
+                  onClick={handleDownloadTemplate}
+                  title="Download CSV Template"
+                  className="px-3 py-2 bg-[#0a0a0f]/80 hover:bg-[#0a0a0f] border-2 border-[#00CED1]/30 hover:border-[#00CED1]/60 text-white rounded-lg transition-all"
+                >
+                  <Icon name="FileText" size={16} />
+                </button>
+              </div>
             </div>
           </div>
         </div>

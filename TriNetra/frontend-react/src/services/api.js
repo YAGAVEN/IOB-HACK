@@ -1,11 +1,29 @@
 // TriNetra API Module
 class TriNetraAPI {
     constructor() {
-        this.baseURL = '/api';
+        this.baseURL = this.resolveBaseURL();
+    }
+
+    resolveBaseURL() {
+        const envBase = import.meta.env.VITE_API_BASE_URL;
+        if (envBase && typeof envBase === 'string') {
+            return envBase.replace(/\/$/, '');
+        }
+
+        const host = window.location.hostname;
+        const isLocal = host === 'localhost' || host === '127.0.0.1';
+
+        // Prefer direct backend URL locally so Mule APIs still work even when proxy is not active.
+        if (isLocal) {
+            return 'http://localhost:5001/api';
+        }
+
+        return '/api';
     }
 
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+        const isMuleEndpoint = endpoint.startsWith('/mule/');
         const config = {
             headers: {
                 'Content-Type': 'application/json',
@@ -19,22 +37,32 @@ class TriNetraAPI {
             // Check if response is actually JSON
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-                console.warn(`⚠️ API endpoint ${endpoint} returned non-JSON response - using mock data`);
+                if (isMuleEndpoint) {
+                    throw new Error(`Mule API returned non-JSON response for ${endpoint}. Verify backend/proxy is running.`);
+                }
+                console.warn(`[WARN] API endpoint ${endpoint} returned non-JSON response - using mock data`);
                 return this.getMockData(endpoint);
             }
             
             const data = await response.json();
             
             if (!response.ok) {
-                console.warn(`⚠️ API error ${response.status} for ${endpoint} - using mock data`);
+                if (isMuleEndpoint) {
+                    const backendMessage = data?.message || data?.error || `HTTP ${response.status}`;
+                    throw new Error(backendMessage);
+                }
+                console.warn(`[WARN] API error ${response.status} for ${endpoint} - using mock data`);
                 return this.getMockData(endpoint);
             }
             
-            console.log(`✅ API Success: ${endpoint}`, data);
+            console.log(`[SUCCESS] API Success: ${endpoint}`, data);
             return data;
         } catch (error) {
-            console.error(`❌ API request failed for ${endpoint}:`, error.message);
-            console.warn(`⚠️ Using mock data for ${endpoint} due to error: ${error.message}`);
+            console.error(`[ERROR] API request failed for ${endpoint}:`, error.message);
+            if (isMuleEndpoint) {
+                throw error;
+            }
+            console.warn(`[WARN] Using mock data for ${endpoint} due to error: ${error.message}`);
             return this.getMockData(endpoint);
         }
     }

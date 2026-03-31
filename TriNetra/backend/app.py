@@ -11,6 +11,7 @@ from api.chronos_api import chronos_bp
 from api.hydra_api import hydra_bp  
 from api.autosar_api import autosar_bp
 from api.mule_api import mule_bp
+from api.import_api import import_bp
 from data.synthetic_generator import init_database
 
 def create_app():
@@ -25,6 +26,7 @@ def create_app():
     app.register_blueprint(hydra_bp, url_prefix='/api/hydra')
     app.register_blueprint(autosar_bp, url_prefix='/api/autosar')
     app.register_blueprint(mule_bp, url_prefix='/api/mule')
+    app.register_blueprint(import_bp, url_prefix='/api')
     
     # Health check endpoint
     @app.route('/api/health')
