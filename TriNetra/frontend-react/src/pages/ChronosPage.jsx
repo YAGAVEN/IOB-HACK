@@ -11,6 +11,7 @@ import { TimelineIcon } from '../components/Icons'
 export default function ChronosPage() {
   const navigate = useNavigate()
   const timelineRef = useRef(null)
+  const csvInputRef = useRef(null)
 
   const [speed, setSpeed] = useState(1)
   const [viewMode, setViewMode] = useState('timeline')
@@ -18,6 +19,7 @@ export default function ChronosPage() {
   const [insights, setInsights] = useState([])
   const [insightsLoading, setInsightsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [importing, setImporting] = useState(false)
 
   /* ── Handlers ── */
   const handleTimeQuantumChange = async (e) => {
@@ -138,6 +140,28 @@ export default function ChronosPage() {
     timelineRef.current?.exportReport()
   }
 
+  const handleCSVImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // Reset input so the same file can be re-selected
+    e.target.value = ''
+
+    setImporting(true)
+    try {
+      const api = (await import('../services/api.js')).default
+      const result = await api.importCSV(file)
+      if (result.status === 'success') {
+        notify(result.message, 'success')
+      } else {
+        notify(result.message || 'Import failed', 'error')
+      }
+    } catch (err) {
+      notify('CSV import failed: ' + err.message, 'error')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   return (
     <div className="text-white">
       <Navbar pageTitle="CHRONOS" pageIcon="🕐" pageTitleColor="text-[#00ff87]" />
@@ -235,6 +259,25 @@ export default function ChronosPage() {
                 className="w-full px-4 py-2 bg-[#20B2AA] hover:bg-[#20B2AA]/80 text-white rounded-lg transition-all uppercase text-sm font-semibold tracking-wide"
               >
                 Export Report
+              </button>
+            </div>
+
+            {/* Import CSV */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">Import Data</label>
+              <input
+                ref={csvInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={handleCSVImport}
+              />
+              <button
+                onClick={() => csvInputRef.current?.click()}
+                disabled={importing}
+                className="w-full px-4 py-2 bg-[#7C3AED] hover:bg-[#7C3AED]/80 text-white rounded-lg transition-all uppercase text-sm font-semibold tracking-wide disabled:opacity-50"
+              >
+                {importing ? 'Importing…' : '📥 Import CSV'}
               </button>
             </div>
           </div>
