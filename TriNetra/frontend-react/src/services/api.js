@@ -1,7 +1,24 @@
 // TriNetra API Module
 class TriNetraAPI {
     constructor() {
-        this.baseURL = '/api';
+        this.baseURL = this.resolveBaseURL();
+    }
+
+    resolveBaseURL() {
+        const envBase = import.meta.env.VITE_API_BASE_URL;
+        if (envBase && typeof envBase === 'string') {
+            return envBase.replace(/\/$/, '');
+        }
+
+        const host = window.location.hostname;
+        const isLocal = host === 'localhost' || host === '127.0.0.1';
+
+        // Prefer direct backend URL locally so Mule APIs still work even when proxy is not active.
+        if (isLocal) {
+            return 'http://localhost:5001/api';
+        }
+
+        return '/api';
     }
 
     async request(endpoint, options = {}) {
