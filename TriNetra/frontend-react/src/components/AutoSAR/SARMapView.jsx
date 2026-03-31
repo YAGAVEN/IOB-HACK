@@ -25,7 +25,7 @@ export default function SARMapView() {
   return (
     <div
       id="sar-map"
-      className="h-96 rounded-lg overflow-hidden"
+      className="h-110 rounded-lg overflow-hidden"
       style={{ border: '2px solid #00ff87', boxShadow: '0 4px 20px rgba(0,255,135,0.2)' }}
     />
   )

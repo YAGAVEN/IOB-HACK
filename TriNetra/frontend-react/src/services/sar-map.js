@@ -20,7 +20,7 @@ export async function initSarMap() {
     
     // Set styles for the existing container
     mapContainer.style.width = '100%';
-    mapContainer.style.height = '400px';
+    mapContainer.style.height = '440px';
     mapContainer.style.border = '2px solid #00ff87';
     mapContainer.style.borderRadius = '8px';
     mapContainer.style.boxShadow = '0 4px 20px rgba(0, 255, 135, 0.2)';

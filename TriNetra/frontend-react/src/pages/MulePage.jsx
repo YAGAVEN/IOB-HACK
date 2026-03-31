@@ -13,12 +13,16 @@ export default function MulePage() {
   const [sarGenerating, setSarGenerating] = useState(false)
   const [highRiskAccounts, setHighRiskAccounts] = useState([])
   const [highRiskLoading, setHighRiskLoading] = useState(false)
+  const [demoAccounts, setDemoAccounts] = useState({ low: null, high: null })
+  const [demoLoading, setDemoLoading] = useState(false)
 
-  const analyseAccount = async () => {
-    if (!accountId.trim()) {
+  const runAccountAnalysis = async (targetAccountId) => {
+    const account = targetAccountId.trim()
+    if (!account) {
       notify('Please enter an Account ID', 'warning')
       return
     }
+
     setLoading(true)
     setRiskData(null)
     setNetworkData(null)
@@ -26,19 +30,24 @@ export default function MulePage() {
     try {
       const api = (await import('../services/api.js')).default
       const [risk, network, layering] = await Promise.all([
-        api.getMuleRisk(accountId.trim()),
-        api.getNetworkMetrics(accountId.trim()),
-        api.getLayeringDetection(accountId.trim()),
+        api.getMuleRisk(account),
+        api.getNetworkMetrics(account),
+        api.getLayeringDetection(account),
       ])
       setRiskData(risk)
       setNetworkData(network)
       setLayeringData(layering)
-      notify(`Analysis complete for ${accountId}`, 'success')
+      setAccountId(account)
+      notify(`Analysis complete for ${account}`, 'success')
     } catch (err) {
       notify(`Analysis failed: ${err.message}`, 'error')
     } finally {
       setLoading(false)
     }
+  }
+
+  const analyseAccount = async () => {
+    await runAccountAnalysis(accountId)
   }
 
   const generateSAR = async () => {
@@ -72,6 +81,56 @@ export default function MulePage() {
   const selectHighRisk = (id) => {
     setAccountId(id)
     notify(`Account ${id} loaded – click Analyse to continue`, 'info')
+  }
+
+  const loadDemoAccountsFromData = async () => {
+    setDemoLoading(true)
+    try {
+      const api = (await import('../services/api.js')).default
+      const timeline = await api.getTimelineData('all', '1m')
+      const transactions = timeline?.data ?? []
+
+      if (!transactions.length) {
+        notify('No timeline data available to build demo accounts', 'warning')
+        return
+      }
+
+      const byAccount = new Map()
+      transactions.forEach((tx) => {
+        const score = Number(tx.suspicious_score) || 0
+        const accounts = [tx.from_account, tx.to_account].filter(Boolean)
+
+        accounts.forEach((id) => {
+          const current = byAccount.get(id) || { sum: 0, count: 0 }
+          current.sum += score
+          current.count += 1
+          byAccount.set(id, current)
+        })
+      })
+
+      const ranked = Array.from(byAccount.entries())
+        .map(([account_id, agg]) => ({
+          account_id,
+          avg_score: agg.count ? agg.sum / agg.count : 0,
+          tx_count: agg.count,
+        }))
+        .filter((item) => item.tx_count > 0)
+
+      if (ranked.length < 2) {
+        notify('Insufficient account diversity in data for low/high demo', 'warning')
+        return
+      }
+
+      const low = [...ranked].sort((a, b) => a.avg_score - b.avg_score)[0]
+      const high = [...ranked].sort((a, b) => b.avg_score - a.avg_score)[0]
+
+      setDemoAccounts({ low, high })
+      notify('Low-risk and high-risk demo accounts ready', 'success')
+    } catch {
+      notify('Failed to derive demo accounts from data', 'error')
+    } finally {
+      setDemoLoading(false)
+    }
   }
 
   return (
@@ -120,6 +179,55 @@ export default function MulePage() {
             >
               {sarGenerating ? 'Generating…' : '📋 Generate SAR'}
             </button>
+          </div>
+
+          <div className="mt-5 border-t border-white/10 pt-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+              <h3 className="text-sm font-semibold text-[#00ff87] uppercase tracking-wide">
+                Engine Verification From Data
+              </h3>
+              <button
+                onClick={loadDemoAccountsFromData}
+                disabled={demoLoading}
+                className="px-4 py-2 bg-[#00d4ff]/20 hover:bg-[#00d4ff]/30 text-[#00d4ff] text-sm font-semibold rounded-xl transition-all disabled:opacity-40"
+              >
+                {demoLoading ? 'Loading Data…' : 'Load Low/High Samples'}
+              </button>
+            </div>
+
+            {(demoAccounts.low || demoAccounts.high) ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {demoAccounts.low && (
+                  <button
+                    onClick={() => runAccountAnalysis(demoAccounts.low.account_id)}
+                    className="text-left p-4 bg-green-500/10 border border-green-400/30 hover:border-green-400/60 rounded-xl transition-all"
+                  >
+                    <div className="text-xs uppercase tracking-wide text-green-400 mb-1">Low Risk Sample</div>
+                    <div className="text-white font-mono text-sm mb-1">{demoAccounts.low.account_id}</div>
+                    <div className="text-xs text-gray-300">
+                      Avg Suspicion: {(demoAccounts.low.avg_score * 100).toFixed(1)}% · Tx: {demoAccounts.low.tx_count}
+                    </div>
+                  </button>
+                )}
+
+                {demoAccounts.high && (
+                  <button
+                    onClick={() => runAccountAnalysis(demoAccounts.high.account_id)}
+                    className="text-left p-4 bg-red-500/10 border border-red-400/30 hover:border-red-400/60 rounded-xl transition-all"
+                  >
+                    <div className="text-xs uppercase tracking-wide text-red-400 mb-1">High Risk Sample</div>
+                    <div className="text-white font-mono text-sm mb-1">{demoAccounts.high.account_id}</div>
+                    <div className="text-xs text-gray-300">
+                      Avg Suspicion: {(demoAccounts.high.avg_score * 100).toFixed(1)}% · Tx: {demoAccounts.high.tx_count}
+                    </div>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500">
+                Load samples to auto-pick one low-risk and one high-risk account from live timeline data.
+              </p>
+            )}
           </div>
         </div>
 

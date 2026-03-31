@@ -6,6 +6,7 @@ import NotificationToast, { notify } from '../components/shared/NotificationToas
 import TimelineView from '../components/Chronos/TimelineView.jsx'
 import PlaybackControls from '../components/Chronos/PlaybackControls.jsx'
 import AIInsightsPanel from '../components/Chronos/AIInsightsPanel.jsx'
+import { TimelineIcon } from '../components/Icons'
 
 export default function ChronosPage() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export default function ChronosPage() {
 
   const [speed, setSpeed] = useState(1)
   const [viewMode, setViewMode] = useState('timeline')
+  const [networkFilter, setNetworkFilter] = useState('all')
   const [insights, setInsights] = useState([])
   const [insightsLoading, setInsightsLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -42,6 +44,11 @@ export default function ChronosPage() {
     timelineRef.current?.switchView(mode)
   }
 
+  const handleNetworkFilter = (filter) => {
+    setNetworkFilter(filter)
+    timelineRef.current?.setNetworkRiskFilter(filter)
+  }
+
   const handleGenerateInsights = async () => {
     setInsightsLoading(true)
     try {
@@ -63,21 +70,65 @@ export default function ChronosPage() {
 
       const result = await geminiAPI.enhanceFinancialAnalysis(analysisData)
 
-      // Format the result as HTML insight cards
+      // Format the result as professional HTML cards (NO EMOJIS)
       const insightHtml = `
-        <div class="space-y-4 text-gray-300">
-          <p>📊 <strong class="text-[#00ff87]">${transactions.length}</strong> transactions analysed</p>
-          <p>🚨 <strong class="text-red-400">${suspiciousCount}</strong> suspicious patterns detected</p>
-          <p>💰 Total exposure: <strong class="text-[#00d4ff]">₹${totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</strong></p>
-          <p>⚠️ Risk Level: <strong class="text-yellow-400">${result?.riskAssessment || 'MEDIUM'}</strong> (${result?.confidence || 80}% confidence)</p>
-          <p>🔍 Techniques: ${(result?.techniques || patterns).join(', ')}</p>
-          ${result?.enhancedInsights ? `<p class="mt-2 text-sm">${result.enhancedInsights}</p>` : ''}
-          ${result?.recommendations ? `<div class="mt-3"><strong class="text-[#00ff87]">Recommendations:</strong><ul class="list-disc list-inside mt-1 text-sm">${result.recommendations.map(r => `<li>${r}</li>`).join('')}</ul></div>` : ''}
+        <div class="space-y-6 text-gray-300">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-[#00CED1]/10 border border-[#00CED1]/30 rounded-lg p-4">
+              <div class="text-xs uppercase tracking-wide text-[#00CED1] mb-1">Transactions Analyzed</div>
+              <div class="text-3xl font-bold text-white">${transactions.length}</div>
+            </div>
+            <div class="bg-[#FF3333]/10 border border-[#FF3333]/30 rounded-lg p-4">
+              <div class="text-xs uppercase tracking-wide text-[#FF3333] mb-1">Suspicious Patterns</div>
+              <div class="text-3xl font-bold text-white">${suspiciousCount} <span class="text-sm text-gray-400">(${((suspiciousCount/transactions.length)*100).toFixed(1)}%)</span></div>
+            </div>
+          </div>
+          
+          <div class="bg-[#00CED1]/10 border border-[#00CED1]/30 rounded-lg p-4">
+            <div class="text-xs uppercase tracking-wide text-[#00CED1] mb-2">Total Exposure</div>
+            <div class="text-2xl font-bold text-white">₹${totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+          </div>
+          
+          <div class="bg-[#FFB800]/10 border border-[#FFB800]/30 rounded-lg p-4">
+            <div class="text-xs uppercase tracking-wide text-[#FFB800] mb-2">Risk Assessment</div>
+            <div class="flex items-center justify-between">
+              <span class="text-xl font-bold text-white">${result?.riskAssessment || 'MEDIUM'}</span>
+              <span class="text-sm text-gray-400">Confidence: ${result?.confidence || 80}%</span>
+            </div>
+          </div>
+          
+          ${result?.techniques || patterns.length > 0 ? `
+            <div class="bg-[#20B2AA]/10 border border-[#20B2AA]/30 rounded-lg p-4">
+              <div class="text-xs uppercase tracking-wide text-[#20B2AA] mb-2">Detection Techniques</div>
+              <div class="text-sm text-gray-300">${(result?.techniques || patterns).join(' • ')}</div>
+            </div>
+          ` : ''}
+          
+          ${result?.enhancedInsights ? `
+            <div class="bg-white/5 border border-white/10 rounded-lg p-4">
+              <div class="text-xs uppercase tracking-wide text-gray-400 mb-2">Analysis Summary</div>
+              <p class="text-sm text-gray-300">${result.enhancedInsights}</p>
+            </div>
+          ` : ''}
+          
+          ${result?.recommendations ? `
+            <div class="bg-[#00CED1]/10 border border-[#00CED1]/30 rounded-lg p-4">
+              <div class="text-xs uppercase tracking-wide text-[#00CED1] mb-3">Recommendations</div>
+              <ul class="space-y-2">
+                ${result.recommendations.map(r => `<li class="text-sm text-gray-300 flex items-start"><span class="text-[#00CED1] mr-2">▸</span><span>${r}</span></li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
         </div>
       `
       setInsights([insightHtml])
     } catch {
-      setInsights(['<p class="text-gray-300">AI analysis unavailable in demo mode.</p>'])
+      setInsights([`
+        <div class="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+          <div class="text-gray-400 mb-2">AI Analysis Unavailable</div>
+          <p class="text-sm text-gray-500">Demo mode - Connect to AI service for enhanced insights.</p>
+        </div>
+      `])
     } finally {
       setInsightsLoading(false)
     }
@@ -109,16 +160,16 @@ export default function ChronosPage() {
         </div>
 
         {/* Controls */}
-        <div className="bg-[#1a1a2e]/60 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-[#00ff87]/20">
-          <h3 className="text-2xl font-semibold mb-6 text-[#00ff87]">Timeline Controls</h3>
+        <div className="bg-[#1a1a2e]/60 backdrop-blur-sm rounded-2xl p-8 mb-8 border-2 border-[#00CED1]/20">
+          <h3 className="text-2xl font-semibold mb-6 text-[#00CED1] uppercase tracking-wide">Analysis Controls</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
 
             {/* Time Quantum */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">Time Period</label>
+              <label className="block text-sm font-medium text-gray-300 uppercase tracking-wide">Time Period</label>
               <select
                 onChange={handleTimeQuantumChange}
-                className="w-full bg-[#0a0a0f]/80 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87]"
+                className="w-full bg-[#0a0a0f]/80 border-2 border-[#00CED1]/30 rounded-lg px-3 py-2 text-white focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all"
               >
                 <option value="1m">1 Month</option>
                 <option value="6m">6 Months</option>
@@ -136,14 +187,14 @@ export default function ChronosPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Enter search term..."
-                  className="flex-1 bg-[#0a0a0f]/80 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87]"
+                  placeholder="Enter account ID or transaction pattern..."
+                  className="flex-1 bg-[#0a0a0f]/80 border-2 border-[#00CED1]/30 rounded-lg px-3 py-2 text-white focus:border-[#00CED1] focus:ring-1 focus:ring-[#00CED1] transition-all"
                 />
                 <button
                   onClick={handleSearch}
-                  className="px-4 py-2 bg-[#00ff87] hover:bg-[#00ff87]/80 text-[#0a0a0f] font-semibold rounded-lg transition-colors"
+                  className="px-6 py-2 bg-[#00CED1] hover:bg-[#00CED1]/80 text-[#0a0a0f] font-semibold rounded-lg transition-all uppercase tracking-wide"
                 >
-                  🔍
+                  Search
                 </button>
               </div>
             </div>
@@ -159,40 +210,77 @@ export default function ChronosPage() {
 
             {/* View Mode */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">View Mode</label>
+              <label className="block text-sm font-medium text-gray-300">Visualization Mode</label>
               <div className="flex space-x-2">
                 <button
                   onClick={() => handleViewSwitch('timeline')}
-                  className={`flex-1 px-3 py-2 rounded-lg transition-colors ${viewMode === 'timeline' ? 'bg-[#00ff87] text-[#0a0a0f] font-semibold' : 'bg-[#0a0a0f]/80 text-gray-300 border border-gray-600 hover:border-[#00ff87]/50'}`}
+                  className={`flex-1 px-3 py-2 rounded-lg transition-all uppercase text-sm font-semibold tracking-wide ${viewMode === 'timeline' ? 'bg-[#00CED1] text-[#0a0a0f]' : 'bg-[#0a0a0f]/80 text-gray-300 border-2 border-[#00CED1]/30 hover:border-[#00CED1]/60'}`}
                 >
-                  📈 Timeline
+                  Timeline
                 </button>
                 <button
                   onClick={() => handleViewSwitch('network')}
-                  className={`flex-1 px-3 py-2 rounded-lg transition-colors ${viewMode === 'network' ? 'bg-[#00ff87] text-[#0a0a0f] font-semibold' : 'bg-[#0a0a0f]/80 text-gray-300 border border-gray-600 hover:border-[#00ff87]/50'}`}
+                  className={`flex-1 px-3 py-2 rounded-lg transition-all uppercase text-sm font-semibold tracking-wide ${viewMode === 'network' ? 'bg-[#00CED1] text-[#0a0a0f]' : 'bg-[#0a0a0f]/80 text-gray-300 border-2 border-[#00CED1]/30 hover:border-[#00CED1]/60'}`}
                 >
-                  🕸️ Network
+                  Network
                 </button>
               </div>
             </div>
 
             {/* Export */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">Export</label>
+              <label className="block text-sm font-medium text-gray-300">Export Results</label>
               <button
                 onClick={handleExport}
-                className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                className="w-full px-4 py-2 bg-[#20B2AA] hover:bg-[#20B2AA]/80 text-white rounded-lg transition-all uppercase text-sm font-semibold tracking-wide"
               >
-                📄 Export PDF
+                Export Report
               </button>
             </div>
           </div>
         </div>
 
+        {viewMode === 'network' && (
+          <div className="bg-[#1a1a2e]/60 backdrop-blur-sm rounded-2xl p-4 mb-4 border-2 border-[#00CED1]/20">
+            <div className="flex flex-wrap gap-3">
+              {[
+                {
+                  key: 'all',
+                  label: 'All Transactions',
+                  activeClass: 'bg-white/20 text-white border-white/40',
+                  idleClass: 'bg-[#0a0a0f]/80 text-gray-300 border-white/20 hover:border-white/50 hover:text-white',
+                },
+                {
+                  key: 'low',
+                  label: 'Low Risk',
+                  activeClass: 'bg-[#00CED1]/20 text-[#00CED1] border-[#00CED1]/60',
+                  idleClass: 'bg-[#0a0a0f]/80 text-gray-300 border-[#00CED1]/30 hover:border-[#00CED1]/60 hover:text-[#00CED1]',
+                },
+                {
+                  key: 'high',
+                  label: 'High Risk',
+                  activeClass: 'bg-[#FF3333]/20 text-[#FF3333] border-[#FF3333]/60',
+                  idleClass: 'bg-[#0a0a0f]/80 text-gray-300 border-[#FF3333]/30 hover:border-[#FF3333]/60 hover:text-[#FF3333]',
+                },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  onClick={() => handleNetworkFilter(item.key)}
+                  className={`px-4 py-2 rounded-lg border-2 transition-all uppercase text-sm tracking-wide font-semibold ${networkFilter === item.key
+                    ? item.activeClass
+                    : item.idleClass}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Timeline Visualization */}
-        <div className="bg-[#1a1a2e]/60 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-[#00ff87]/20">
+        <div className="bg-[#1a1a2e]/60 backdrop-blur-sm rounded-2xl p-8 mb-8 border-2 border-[#00CED1]/20">
           <TimelineView ref={timelineRef} containerId="chronos-timeline" />
-          <div id="timeline-info" className="mt-6 p-6 bg-[#0a0a0f]/40 rounded-lg" />
+          <div id="timeline-info" className="mt-6 p-6 bg-[#0a0a0f]/40 rounded-lg border border-[#00CED1]/10" />
         </div>
 
         {/* AI Insights */}
@@ -206,15 +294,15 @@ export default function ChronosPage() {
         <div className="flex justify-between items-center">
           <button
             onClick={() => navigate('/login')}
-            className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all uppercase text-sm font-semibold tracking-wide"
           >
-            ← Back to Login
+            ← Previous
           </button>
           <button
             onClick={() => navigate('/autosar')}
-            className="px-8 py-3 bg-gradient-to-r from-[#00ff87] to-[#00d4ff] text-[#0a0a0f] font-bold rounded-lg hover:shadow-lg transform hover:scale-105 transition-all"
+            className="px-8 py-3 bg-gradient-to-r from-[#00CED1] to-[#20B2AA] text-[#0a0a0f] font-bold rounded-lg hover:shadow-lg transform hover:scale-105 transition-all uppercase tracking-wide"
           >
-            Proceed to Auto-SAR →
+            Continue to Auto-SAR →
           </button>
         </div>
       </main>
@@ -227,9 +315,9 @@ function generateFallbackInsight(transactions) {
   const high = transactions.filter((t) => t.suspicious_score > 0.8).length
   return `
     <div class="space-y-2 text-gray-300">
-      <p>📊 <strong class="text-[#00ff87]">${total}</strong> transactions analysed</p>
-      <p>🚨 <strong class="text-red-400">${high}</strong> high-risk patterns detected</p>
-      <p>⚠️ Structuring and layering behaviour observed across multiple accounts</p>
+      <p class="flex items-center gap-2"><span class="text-[#00CED1] font-semibold">■</span> <strong class="text-[#00CED1]">${total}</strong> transactions analyzed</p>
+      <p class="flex items-center gap-2"><span class="text-[#FF3333] font-semibold">▲</span> <strong class="text-[#FF3333]">${high}</strong> high-risk patterns detected</p>
+      <p class="flex items-center gap-2"><span class="text-[#FFB800] font-semibold">▸</span> Structuring and layering behavior observed across multiple accounts</p>
     </div>
   `
 }

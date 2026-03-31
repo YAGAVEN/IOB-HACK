@@ -690,7 +690,7 @@ class EnhancedHydraAI {
             
             .enhanced-battle-dashboard {
                 display: grid;
-                grid-template-columns: 2fr 1fr;
+                grid-template-columns: 1fr;
                 gap: 2rem;
                 position: relative;
                 z-index: 1;
@@ -702,6 +702,9 @@ class EnhancedHydraAI {
                 border: 2px solid rgba(0, 255, 135, 0.3);
                 overflow: hidden;
                 backdrop-filter: blur(10px);
+                display: flex;
+                flex-direction: column;
+                min-height: clamp(360px, 52vh, 620px);
             }
             
             .log-header-enhanced {
@@ -731,7 +734,8 @@ class EnhancedHydraAI {
             
             .log-content-enhanced {
                 padding: 1rem 1.5rem;
-                max-height: 200px;
+                flex: 1;
+                min-height: 0;
                 overflow-y: auto;
                 scrollbar-width: thin;
                 scrollbar-color: rgba(0, 255, 135, 0.5) rgba(0, 0, 0, 0.3);
@@ -777,7 +781,7 @@ class EnhancedHydraAI {
             
             .battle-metrics {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: repeat(4, 1fr);
                 gap: 1rem;
             }
             
@@ -1011,6 +1015,14 @@ class EnhancedHydraAI {
                 
                 .battle-metrics {
                     grid-template-columns: repeat(2, 1fr);
+                }
+
+                .log-content-enhanced {
+                    min-height: 0;
+                }
+
+                .battle-log-enhanced {
+                    min-height: clamp(280px, 45vh, 420px);
                 }
                 
                 .control-group {
@@ -1378,9 +1390,9 @@ class EnhancedHydraAI {
         logContent.appendChild(entry);
         logContent.scrollTop = logContent.scrollHeight;
         
-        // Keep only last 30 entries
+        // Keep a larger rolling history so previous logs remain available in scroll.
         const entries = logContent.querySelectorAll('.log-entry-enhanced');
-        if (entries.length > 30) {
+        if (entries.length > 200) {
             logContent.removeChild(entries[0]);
         }
     }
@@ -1835,6 +1847,20 @@ class EnhancedHydraAI {
             console.error('❌ HYDRA: Fallback export failed:', error);
             showNotification('Export failed completely', 'error');
         }
+    }
+
+    getMetrics() {
+        const totalBattles = this.battleStats.generator.wins + this.battleStats.attacker.wins;
+        const detectionRate = totalBattles > 0 
+            ? (this.battleStats.generator.wins / totalBattles) 
+            : 0;
+        
+        return {
+            defenderWins: this.battleStats.generator.wins,
+            attackerWins: this.battleStats.attacker.wins,
+            totalBattles: totalBattles,
+            detectionRate: detectionRate
+        };
     }
 }
 

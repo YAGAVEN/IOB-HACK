@@ -20,6 +20,7 @@ class ChronosTimeline {
         this.currentFrame = 0;
         this.animationId = null;
         this.viewMode = 'timeline'; // 'timeline' or 'network'
+        this.networkRiskFilter = 'all'; // all | low | high
         this.selectedNode = null;
         this.networkNodes = [];
         this.networkLinks = [];
@@ -38,53 +39,6 @@ class ChronosTimeline {
         
         // Add explanation panel first
         const container = d3.select(`#${this.containerId}`);
-        
-        // Add CHRONOS explanation
-        container.append('div')
-            .attr('class', 'chronos-explanation bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-8 border border-primary/20 mb-8 shadow-xl')
-            .html(`
-                <div class="explanation-header text-center mb-8">
-                    <h4 class="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">📊 CHRONOS: Transaction Timeline Analysis</h4>
-                    <p class="text-xl text-gray-300 mb-6 leading-relaxed">Interactive time-based visualization of financial transactions and patterns with advanced AI-powered detection.</p>
-                    <div class="bg-primary/20 border border-primary/40 rounded-xl p-4 inline-block">
-                        <p class="start-instruction text-lg font-bold text-primary">👆 <strong>Click Play to start the timeline animation</strong></p>
-                    </div>
-                </div>
-                <div class="explanation-content grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="explanation-item bg-dark/40 rounded-xl p-6 border border-green-400/20 hover:border-green-400/50 transition-all duration-300 hover:transform hover:scale-105">
-                        <div class="text-center mb-4">
-                            <span class="emoji text-4xl block mb-2">🎬</span>
-                            <strong class="text-green-400 text-lg block mb-2">Time-Lapse Animation</strong>
-                        </div>
-                        <p class="text-gray-300 text-sm leading-relaxed">Watch transactions unfold chronologically over time with smooth animations and real-time pattern detection.</p>
-                    </div>
-                    <div class="explanation-item bg-dark/40 rounded-xl p-6 border border-red-400/20 hover:border-red-400/50 transition-all duration-300 hover:transform hover:scale-105">
-                        <div class="text-center mb-4">
-                            <span class="emoji text-4xl block mb-2">🔴</span>
-                            <strong class="text-red-400 text-lg block mb-2">Risk Indicators</strong>
-                        </div>
-                        <p class="text-gray-300 text-sm leading-relaxed">
-                            <span class="text-red-400 font-semibold">Red</span> = High suspicion, 
-                            <span class="text-yellow-400 font-semibold">Yellow</span> = Medium risk, 
-                            <span class="text-blue-400 font-semibold">Blue</span> = Normal transactions
-                        </p>
-                    </div>
-                    <div class="explanation-item bg-dark/40 rounded-xl p-6 border border-yellow-400/20 hover:border-yellow-400/50 transition-all duration-300 hover:transform hover:scale-105">
-                        <div class="text-center mb-4">
-                            <span class="emoji text-4xl block mb-2">⚡</span>
-                            <strong class="text-yellow-400 text-lg block mb-2">Speed Control</strong>
-                        </div>
-                        <p class="text-gray-300 text-sm leading-relaxed">Adjust animation speed from 0.25x to 4x for detailed forensic analysis and pattern identification.</p>
-                    </div>
-                    <div class="explanation-item bg-dark/40 rounded-xl p-6 border border-purple-400/20 hover:border-purple-400/50 transition-all duration-300 hover:transform hover:scale-105">
-                        <div class="text-center mb-4">
-                            <span class="emoji text-4xl block mb-2">🔍</span>
-                            <strong class="text-purple-400 text-lg block mb-2">Interactive Details</strong>
-                        </div>
-                        <p class="text-gray-300 text-sm leading-relaxed">Hover over transactions to see detailed information, risk scores, and ML-powered insights.</p>
-                    </div>
-                </div>
-            `);
         
         // Add status bar
         container.append('div')
@@ -933,7 +887,7 @@ class ChronosTimeline {
     }
 
     displayLayeringSummary(summary) {
-        // Display layering summary in the info panel
+        // Display layering summary in the info panel with VISUAL CHARTS
         const infoContainer = document.getElementById('timeline-info');
         if (!infoContainer) return;
         
@@ -941,60 +895,146 @@ class ChronosTimeline {
         const existing = infoContainer.querySelectorAll('.layering-summary');
         existing.forEach(el => el.remove());
         
+        const total = summary.total_transactions;
+        const criticalPct = (summary.risk_distribution.critical / total * 100).toFixed(1);
+        const mediumPct = (summary.risk_distribution.medium / total * 100).toFixed(1);
+        const lowPct = (summary.risk_distribution.low / total * 100).toFixed(1);
+        
+        const layer1Pct = (summary.layering_effectiveness.layer_1_detection_rate * 100).toFixed(1);
+        const layer2Pct = (summary.layering_effectiveness.layer_2_processing_rate * 100).toFixed(1);
+        const layer3Pct = (summary.layering_effectiveness.layer_3_integration_rate * 100).toFixed(1);
+        
         const summaryDiv = document.createElement('div');
         summaryDiv.className = 'layering-summary';
         summaryDiv.innerHTML = `
-            <div class="bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl p-8 border border-orange-400/30 shadow-xl mb-8">
+            <div class="bg-[#1a1a2e]/80 backdrop-blur-sm rounded-2xl p-8 border-2 border-[#00CED1]/20 mb-8">
                 <div class="text-center mb-8">
-                    <h4 class="text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-4">
-                        🔍 Advanced Layering Analysis Summary
+                    <h4 class="text-2xl font-bold text-[#00CED1] uppercase tracking-wide mb-4">
+                        Transaction Analysis Overview
                     </h4>
-                    <p class="text-lg text-gray-300 leading-relaxed">Multi-layer detection system performance and risk distribution analysis</p>
+                    <p class="text-sm text-gray-400 uppercase tracking-wide">Visual risk distribution and detection performance metrics</p>
                 </div>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div class="bg-dark/60 rounded-xl p-6 text-center border border-secondary/20 hover:border-secondary/50 transition-all duration-300">
-                        <div class="text-3xl font-bold text-secondary mb-2">${summary.total_transactions}</div>
-                        <div class="text-sm text-gray-300 font-medium">Total Transactions</div>
-                        <div class="text-xs text-gray-400 mt-1">Analyzed</div>
+                <!-- Risk Distribution Stacked Bar Chart -->
+                <div class="mb-8">
+                    <h5 class="text-lg font-semibold text-[#00CED1] uppercase tracking-wide mb-4">Risk Distribution</h5>
+                    <div class="relative h-20 bg-[#0a0a0f]/60 rounded-xl overflow-hidden border-2 border-[#00CED1]/20 mb-4">
+                        <!-- Critical segment -->
+                        <div class="absolute left-0 top-0 h-full bg-gradient-to-r from-[#FF3333] to-[#E62E2E] flex items-center justify-center transition-all duration-1000" 
+                             style="width: ${criticalPct}%">
+                            ${parseFloat(criticalPct) > 10 ? `
+                                <div class="text-center px-2">
+                                    <div class="text-lg font-bold text-white">${summary.risk_distribution.critical}</div>
+                                    <div class="text-xs text-white/90 uppercase">Critical</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <!-- Medium segment -->
+                        <div class="absolute top-0 h-full bg-gradient-to-r from-[#FFB800] to-[#FF8C00] flex items-center justify-center transition-all duration-1000 delay-200" 
+                             style="left: ${criticalPct}%; width: ${mediumPct}%">
+                            ${parseFloat(mediumPct) > 10 ? `
+                                <div class="text-center px-2">
+                                    <div class="text-lg font-bold text-[#0a0a0f]">${summary.risk_distribution.medium}</div>
+                                    <div class="text-xs text-[#0a0a0f]/90 uppercase">Medium</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <!-- Low segment -->
+                        <div class="absolute top-0 h-full bg-gradient-to-r from-[#00CED1] to-[#20B2AA] flex items-center justify-center transition-all duration-1000 delay-400" 
+                             style="left: ${parseFloat(criticalPct) + parseFloat(mediumPct)}%; width: ${lowPct}%">
+                            ${parseFloat(lowPct) > 10 ? `
+                                <div class="text-center px-2">
+                                    <div class="text-lg font-bold text-[#0a0a0f]">${summary.risk_distribution.low}</div>
+                                    <div class="text-xs text-[#0a0a0f]/90 uppercase">Low</div>
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
-                    <div class="bg-dark/60 rounded-xl p-6 text-center border border-red-400/20 hover:border-red-400/50 transition-all duration-300">
-                        <div class="text-3xl font-bold text-red-400 mb-2">${summary.risk_distribution.critical}</div>
-                        <div class="text-sm text-gray-300 font-medium">Critical Risk</div>
-                        <div class="text-xs text-red-300 mt-1">Immediate Action</div>
-                    </div>
-                    <div class="bg-dark/60 rounded-xl p-6 text-center border border-yellow-400/20 hover:border-yellow-400/50 transition-all duration-300">
-                        <div class="text-3xl font-bold text-yellow-400 mb-2">${summary.risk_distribution.medium}</div>
-                        <div class="text-sm text-gray-300 font-medium">Medium Risk</div>
-                        <div class="text-xs text-yellow-300 mt-1">Monitor Closely</div>
-                    </div>
-                    <div class="bg-dark/60 rounded-xl p-6 text-center border border-green-400/20 hover:border-green-400/50 transition-all duration-300">
-                        <div class="text-3xl font-bold text-green-400 mb-2">${summary.risk_distribution.low}</div>
-                        <div class="text-sm text-gray-300 font-medium">Low Risk</div>
-                        <div class="text-xs text-green-300 mt-1">Normal Activity</div>
+                    <!-- Legend -->
+                    <div class="grid grid-cols-3 gap-3 text-sm mb-6">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded bg-gradient-to-r from-[#FF3333] to-[#E62E2E]"></div>
+                            <span class="text-gray-300">Critical <span class="text-[#FF3333] font-semibold">(${criticalPct}%)</span></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded bg-gradient-to-r from-[#FFB800] to-[#FF8C00]"></div>
+                            <span class="text-gray-300">Medium <span class="text-[#FFB800] font-semibold">(${mediumPct}%)</span></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded bg-gradient-to-r from-[#00CED1] to-[#20B2AA]"></div>
+                            <span class="text-gray-300">Low Risk <span class="text-[#00CED1] font-semibold">(${lowPct}%)</span></span>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-xl p-6 border border-purple-400/30">
-                    <h5 class="text-2xl font-bold text-purple-400 mb-6 text-center flex items-center justify-center">
-                        ⚡ Detection Effectiveness Matrix
-                        <span class="ml-3 text-sm bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full">AI Powered</span>
-                    </h5>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-dark/40 rounded-xl p-6 text-center border border-primary/20">
-                            <div class="text-2xl font-bold text-primary mb-2">${(summary.layering_effectiveness.layer_1_detection_rate * 100).toFixed(1)}%</div>
-                            <div class="text-gray-300 font-medium">Layer 1: Extraction</div>
-                            <div class="text-xs text-gray-400 mt-2">Data Pattern Recognition</div>
+                <!-- Metric Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-[#00CED1]/10 border-2 border-[#00CED1]/30 rounded-xl p-4 relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="text-3xl font-bold text-[#00CED1] mb-1">${summary.total_transactions}</div>
+                            <div class="text-xs text-gray-400 uppercase tracking-wide">Total</div>
                         </div>
-                        <div class="bg-dark/40 rounded-xl p-6 text-center border border-secondary/20">
-                            <div class="text-2xl font-bold text-secondary mb-2">${(summary.layering_effectiveness.layer_2_processing_rate * 100).toFixed(1)}%</div>
-                            <div class="text-gray-300 font-medium">Layer 2: Processing</div>
-                            <div class="text-xs text-gray-400 mt-2">Behavioral Analysis</div>
+                        <div class="absolute bottom-0 right-0 w-16 h-16 bg-[#00CED1]/10 rounded-tl-full"></div>
+                    </div>
+                    <div class="bg-[#FF3333]/10 border-2 border-[#FF3333]/30 rounded-xl p-4 relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="text-3xl font-bold text-[#FF3333] mb-1">${summary.risk_distribution.critical}</div>
+                            <div class="text-xs text-gray-400 uppercase tracking-wide">Critical</div>
                         </div>
-                        <div class="bg-dark/40 rounded-xl p-6 text-center border border-orange-400/20">
-                            <div class="text-2xl font-bold text-orange-400 mb-2">${(summary.layering_effectiveness.layer_3_integration_rate * 100).toFixed(1)}%</div>
-                            <div class="text-gray-300 font-medium">Layer 3: Integration</div>
-                            <div class="text-xs text-gray-400 mt-2">Risk Assessment</div>
+                        <div class="absolute bottom-2 right-2 flex gap-1">
+                            <div class="w-1 bg-[#FF3333]/30" style="height: 4px"></div>
+                            <div class="w-1 bg-[#FF3333]/30" style="height: 8px"></div>
+                            <div class="w-1 bg-[#FF3333]/30" style="height: 12px"></div>
+                            <div class="w-1 bg-[#FF3333]/30" style="height: 16px"></div>
+                            <div class="w-1 bg-[#FF3333]/30" style="height: 20px"></div>
+                        </div>
+                    </div>
+                    <div class="bg-[#FFB800]/10 border-2 border-[#FFB800]/30 rounded-xl p-4">
+                        <div class="text-3xl font-bold text-[#FFB800] mb-1">${summary.risk_distribution.medium}</div>
+                        <div class="text-xs text-gray-400 uppercase tracking-wide">Medium</div>
+                    </div>
+                    <div class="bg-white/5 border-2 border-white/10 rounded-xl p-4">
+                        <div class="text-3xl font-bold text-white mb-1">${summary.risk_distribution.low}</div>
+                        <div class="text-xs text-gray-400 uppercase tracking-wide">Low Risk</div>
+                    </div>
+                </div>
+                
+                <!-- Detection Effectiveness with Progress Bars -->
+                <div>
+                    <h5 class="text-lg font-semibold text-[#00CED1] uppercase tracking-wide mb-4">Detection Effectiveness</h5>
+                    <div class="space-y-4">
+                        <!-- Layer 1 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-300 font-medium">Layer 1: Pattern Recognition</span>
+                                <span class="text-sm text-[#00CED1] font-bold">${layer1Pct}%</span>
+                            </div>
+                            <div class="h-3 bg-[#0a0a0f]/60 rounded-full overflow-hidden border border-[#00CED1]/20">
+                                <div class="h-full bg-gradient-to-r from-[#00CED1] to-[#20B2AA] transition-all duration-1000" 
+                                     style="width: ${layer1Pct}%"></div>
+                            </div>
+                        </div>
+                        <!-- Layer 2 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-300 font-medium">Layer 2: Behavioral Analysis</span>
+                                <span class="text-sm text-[#00CED1] font-bold">${layer2Pct}%</span>
+                            </div>
+                            <div class="h-3 bg-[#0a0a0f]/60 rounded-full overflow-hidden border border-[#00CED1]/20">
+                                <div class="h-full bg-gradient-to-r from-[#00CED1] to-[#20B2AA] transition-all duration-1000 delay-200" 
+                                     style="width: ${layer2Pct}%"></div>
+                            </div>
+                        </div>
+                        <!-- Layer 3 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-300 font-medium">Layer 3: Risk Assessment</span>
+                                <span class="text-sm text-[#00CED1] font-bold">${layer3Pct}%</span>
+                            </div>
+                            <div class="h-3 bg-[#0a0a0f]/60 rounded-full overflow-hidden border border-[#00CED1]/20">
+                                <div class="h-full bg-gradient-to-r from-[#00CED1] to-[#20B2AA] transition-all duration-1000 delay-400" 
+                                     style="width: ${layer3Pct}%"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1716,112 +1756,115 @@ class ChronosTimeline {
         if (selectedTransaction) {
             const suspicionScore = (selectedTransaction.suspicious_score * 100).toFixed(1);
             let riskLevel = 'Normal';
-            let riskClass = 'normal';
+            let riskBadgeClass = 'bg-[#00CED1]/20 text-[#00CED1] border-[#00CED1]/40';
+            let riskBarClass = 'from-[#00CED1] to-[#20B2AA]';
             
             if (selectedTransaction.suspicious_score > 0.8) {
                 riskLevel = 'Critical';
-                riskClass = 'critical';
+                riskBadgeClass = 'bg-[#FF3333]/20 text-[#FF3333] border-[#FF3333]/40';
+                riskBarClass = 'from-[#FF3333] to-[#E62E2E]';
             } else if (selectedTransaction.suspicious_score > 0.5) {
                 riskLevel = 'Suspicious';
-                riskClass = 'suspicious';
+                riskBadgeClass = 'bg-[#FFB800]/20 text-[#FFB800] border-[#FFB800]/40';
+                riskBarClass = 'from-[#FFB800] to-[#FF8C00]';
             }
+
+            const transactionId = selectedTransaction.id || selectedTransaction.transaction_id || 'N/A';
+            const scenario = selectedTransaction.scenario || 'Unknown';
+            const patternType = selectedTransaction.pattern_type || 'Not specified';
             
             infoPanel.html(`
-                <h4>🔍 Selected Transaction Analysis</h4>
-                <div class="transaction-details">
-                    <div class="detail-item">
-                        <div class="detail-label">Transaction ID</div>
-                        <div class="detail-value">${selectedTransaction.id || selectedTransaction.transaction_id}</div>
+                <div class="bg-linear-to-br from-secondary/12 to-primary/12 rounded-2xl p-6 md:p-8 border border-secondary/35 shadow-xl">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-6">
+                        <div>
+                            <h4 class="text-2xl font-bold text-white mb-2">Selected Transaction Analysis</h4>
+                            <p class="text-sm text-gray-300">Detailed profile for the selected timeline event.</p>
+                        </div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${riskBadgeClass}">
+                            <span class="text-xs uppercase tracking-wider font-semibold">Risk</span>
+                            <span class="text-sm font-bold">${riskLevel}</span>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Amount</div>
-                        <div class="detail-value">${formatCurrency(selectedTransaction.amount)}</div>
+
+                    <div class="mb-7">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Suspicion Score</span>
+                            <span class="text-sm font-bold text-white">${suspicionScore}%</span>
+                        </div>
+                        <div class="h-3 bg-dark/65 rounded-full overflow-hidden border border-secondary/20">
+                            <div class="h-full bg-linear-to-r ${riskBarClass} transition-all duration-700" style="width: ${suspicionScore}%"></div>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Date & Time</div>
-                        <div class="detail-value">${formatDateTime(selectedTransaction.timestamp)}</div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-dark/60 rounded-xl p-4 border border-secondary/25">
+                            <div class="text-xs uppercase tracking-wider text-gray-400 mb-1">Transaction ID</div>
+                            <div class="text-sm text-white font-mono break-all">${transactionId}</div>
+                        </div>
+                        <div class="bg-dark/60 rounded-xl p-4 border border-secondary/25">
+                            <div class="text-xs uppercase tracking-wider text-gray-400 mb-1">Amount</div>
+                            <div class="text-lg font-bold text-secondary">${formatCurrency(selectedTransaction.amount)}</div>
+                        </div>
+                        <div class="bg-dark/60 rounded-xl p-4 border border-secondary/25">
+                            <div class="text-xs uppercase tracking-wider text-gray-400 mb-1">Date and Time</div>
+                            <div class="text-sm text-white">${formatDateTime(selectedTransaction.timestamp)}</div>
+                        </div>
+                        <div class="bg-dark/60 rounded-xl p-4 border border-secondary/25">
+                            <div class="text-xs uppercase tracking-wider text-gray-400 mb-1">Pattern Type</div>
+                            <div class="text-sm text-white">${patternType}</div>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <div class="detail-label">From Account</div>
-                        <div class="detail-value">${selectedTransaction.from_account}</div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-[#00CED1]/10 rounded-xl p-4 border border-[#00CED1]/30">
+                            <div class="text-xs uppercase tracking-wider text-[#00CED1] mb-1">From Account</div>
+                            <div class="text-sm text-white font-mono break-all">${selectedTransaction.from_account || 'N/A'}</div>
+                        </div>
+                        <div class="bg-[#20B2AA]/10 rounded-xl p-4 border border-[#20B2AA]/30">
+                            <div class="text-xs uppercase tracking-wider text-[#20B2AA] mb-1">To Account</div>
+                            <div class="text-sm text-white font-mono break-all">${selectedTransaction.to_account || 'N/A'}</div>
+                        </div>
                     </div>
-                    <div class="detail-item">
-                        <div class="detail-label">To Account</div>
-                        <div class="detail-value">${selectedTransaction.to_account}</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Risk Assessment</div>
-                        <div class="detail-value ${riskClass}">${riskLevel} (${suspicionScore}%)</div>
-                    </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Scenario</div>
-                        <div class="detail-value">${selectedTransaction.scenario || 'Unknown'}</div>
+
+                    <div class="bg-dark/55 rounded-xl p-4 border border-secondary/20">
+                        <div class="text-xs uppercase tracking-wider text-gray-400 mb-1">Scenario</div>
+                        <div class="text-sm text-white">${scenario}</div>
                     </div>
                 </div>
             `);
         } else {
-            // Show overview statistics when no transaction is selected
-            const stats = this.calculateStats();
+            // Show guidance panel when no transaction is selected
             infoPanel.html(`
                 <div class="bg-gradient-to-br from-secondary/10 to-primary/10 rounded-2xl p-8 border border-secondary/30 shadow-xl">
                     <div class="text-center mb-8">
                         <h4 class="text-3xl font-bold bg-gradient-to-r from-secondary to-primary bg-clip-text text-transparent mb-4">
-                            📊 Timeline Overview - ${this.currentScenario.toUpperCase()}
+                            Timeline View - ${this.currentScenario.toUpperCase()}
                         </h4>
-                        <p class="text-lg text-gray-300 leading-relaxed">Comprehensive statistical analysis of transaction patterns and risk distribution</p>
+                        <p class="text-lg text-gray-300 leading-relaxed">Explore transaction behavior through the interactive timeline.</p>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-                        <div class="bg-dark/60 rounded-xl p-6 text-center border border-secondary/20 hover:border-secondary/50 transition-all duration-300 hover:transform hover:scale-105">
-                            <div class="text-4xl font-bold text-secondary mb-2">${stats.total}</div>
-                            <div class="text-sm text-gray-300 font-medium">Total Transactions</div>
-                            <div class="text-xs text-gray-400 mt-1">Processed & Analyzed</div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-dark/60 rounded-xl p-6 border border-secondary/20">
+                            <div class="text-sm text-secondary font-semibold uppercase tracking-wide mb-2">Select</div>
+                            <p class="text-sm text-gray-300 leading-relaxed">Click any timeline point to inspect transaction-level details and account flow.</p>
                         </div>
-                        <div class="bg-dark/60 rounded-xl p-6 text-center border border-yellow-400/20 hover:border-yellow-400/50 transition-all duration-300 hover:transform hover:scale-105">
-                            <div class="text-4xl font-bold text-yellow-400 mb-2">${stats.suspicious}</div>
-                            <div class="text-sm text-gray-300 font-medium">Suspicious Transactions</div>
-                            <div class="text-xs text-yellow-300 mt-1">Requires Investigation</div>
+                        <div class="bg-dark/60 rounded-xl p-6 border border-secondary/20">
+                            <div class="text-sm text-secondary font-semibold uppercase tracking-wide mb-2">Navigate</div>
+                            <p class="text-sm text-gray-300 leading-relaxed">Use timeline controls and playback speed to trace events over time.</p>
                         </div>
-                        <div class="bg-dark/60 rounded-xl p-6 text-center border border-red-400/20 hover:border-red-400/50 transition-all duration-300 hover:transform hover:scale-105">
-                            <div class="text-4xl font-bold text-red-400 mb-2">${stats.critical}</div>
-                            <div class="text-sm text-gray-300 font-medium">Critical Transactions</div>
-                            <div class="text-xs text-red-300 mt-1">Immediate Action Required</div>
-                        </div>
-                        <div class="bg-dark/60 rounded-xl p-6 text-center border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:transform hover:scale-105">
-                            <div class="text-2xl font-bold text-primary mb-2">${formatCurrency(stats.totalAmount)}</div>
-                            <div class="text-sm text-gray-300 font-medium">Total Amount</div>
-                            <div class="text-xs text-gray-400 mt-1">Transaction Volume</div>
-                        </div>
-                        <div class="bg-dark/60 rounded-xl p-6 text-center border border-purple-400/20 hover:border-purple-400/50 transition-all duration-300 hover:transform hover:scale-105">
-                            <div class="text-2xl font-bold text-purple-400 mb-2">${formatCurrency(stats.avgAmount)}</div>
-                            <div class="text-sm text-gray-300 font-medium">Average Amount</div>
-                            <div class="text-xs text-gray-400 mt-1">Per Transaction</div>
-                        </div>
-                        <div class="bg-dark/60 rounded-xl p-6 text-center border border-orange-400/20 hover:border-orange-400/50 transition-all duration-300 hover:transform hover:scale-105">
-                            <div class="text-4xl font-bold text-orange-400 mb-2">${(stats.avgSuspicion * 100).toFixed(1)}%</div>
-                            <div class="text-sm text-gray-300 font-medium">Average Suspicion</div>
-                            <div class="text-xs text-orange-300 mt-1">Risk Score</div>
+                        <div class="bg-dark/60 rounded-xl p-6 border border-secondary/20">
+                            <div class="text-sm text-secondary font-semibold uppercase tracking-wide mb-2">Investigate</div>
+                            <p class="text-sm text-gray-300 leading-relaxed">Switch between timeline and network modes to follow linked activities.</p>
                         </div>
                     </div>
                     
                     <div class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-6 border border-blue-400/30 text-center">
-                        <div class="text-blue-400 text-lg font-semibold mb-2">💡 Interactive Analysis</div>
+                        <div class="text-blue-400 text-lg font-semibold mb-2">Interactive Analysis</div>
                         <p class="text-gray-300 text-sm leading-relaxed">Click on any transaction point in the timeline to see detailed analysis information including risk factors, ML confidence scores, and regulatory compliance indicators.</p>
                     </div>
                 </div>
             `);
         }
-    }
-
-    calculateStats() {
-        const total = this.data.length;
-        const suspicious = this.data.filter(tx => tx.suspicious_score > 0.5).length;
-        const critical = this.data.filter(tx => tx.suspicious_score > 0.8).length;
-        const totalAmount = this.data.reduce((sum, tx) => sum + tx.amount, 0);
-        const avgAmount = totalAmount / total;
-        const avgSuspicion = this.data.reduce((sum, tx) => sum + tx.suspicious_score, 0) / total;
-
-        return { total, suspicious, critical, totalAmount, avgAmount, avgSuspicion };
     }
 
     play() {
@@ -1954,13 +1997,45 @@ class ChronosTimeline {
         showNotification(`Switched to ${mode} view`, 'info');
     }
 
+    setNetworkRiskFilter(filter = 'all') {
+        const allowed = new Set(['all', 'low', 'high']);
+        if (!allowed.has(filter)) return;
+
+        this.networkRiskFilter = filter;
+
+        if (this.viewMode === 'network') {
+            this.renderNetwork();
+        }
+    }
+
+    getFilteredNetworkTransactions() {
+        if (this.networkRiskFilter === 'all') return this.data;
+
+        return this.data.filter((tx) => {
+            const score = tx.suspicious_score || 0;
+            if (this.networkRiskFilter === 'low') return score <= 0.5;
+            if (this.networkRiskFilter === 'high') return score > 0.5;
+            return true;
+        });
+    }
+
     renderNetwork() {
         if (!this.data.length) {
             console.log('⚠️ CHRONOS: No data available for network view');
             return;
         }
+
+        const filteredTransactions = this.getFilteredNetworkTransactions();
+
+        if (!filteredTransactions.length) {
+            this.g.selectAll('*').remove();
+            this.networkNodes = [];
+            this.networkLinks = [];
+            showNotification('No transactions available for this network filter', 'warning');
+            return;
+        }
         
-        console.log(`🕸️ CHRONOS: Rendering network view with ${this.data.length} transactions`);
+        console.log(`🕸️ CHRONOS: Rendering network view with ${filteredTransactions.length} transactions`);
         
         // Clear existing visualization
         this.g.selectAll('*').remove();
@@ -1973,7 +2048,7 @@ class ChronosTimeline {
         this.svg.call(zoom.transform, d3.zoomIdentity.translate(this.margin.left, this.margin.top));
         
         // Create network data from transactions
-        this.createNetworkData();
+        this.createNetworkData(filteredTransactions);
         
         // Set up force simulation
         this.simulation = d3.forceSimulation(this.networkNodes)
@@ -2074,14 +2149,14 @@ class ChronosTimeline {
         });
     }
 
-    createNetworkData() {
+    createNetworkData(transactions = this.data) {
         // Create account nodes and transaction links
         const accounts = new Map();
         const links = [];
         
-        console.log(`🔧 CHRONOS: Creating network data from ${this.data.length} transactions`);
+        console.log(`🔧 CHRONOS: Creating network data from ${transactions.length} transactions`);
         
-        this.data.forEach(tx => {
+        transactions.forEach(tx => {
             // Create or update account nodes
             if (!accounts.has(tx.from_account)) {
                 accounts.set(tx.from_account, {

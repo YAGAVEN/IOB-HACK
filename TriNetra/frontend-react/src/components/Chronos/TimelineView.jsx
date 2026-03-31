@@ -34,6 +34,7 @@ const TimelineView = forwardRef(function TimelineView({ containerId = 'chronos-t
     setPlaybackSpeed: (s) => instanceRef.current?.setPlaybackSpeed?.(s),
     searchTransactions: (term, type) => instanceRef.current?.searchTransactions(term, type),
     switchView: (mode) => instanceRef.current?.switchView?.(mode),
+    setNetworkRiskFilter: (filter) => instanceRef.current?.setNetworkRiskFilter?.(filter),
     exportReport: () => instanceRef.current?.exportReport?.(),
   }))
 

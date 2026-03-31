@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+import ScrollToTop from './components/shared/ScrollToTop.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import ChronosPage from './pages/ChronosPage.jsx'
 import AutoSARPage from './pages/AutoSARPage.jsx'
@@ -15,6 +16,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/chronos" element={<ProtectedRoute><ChronosPage /></ProtectedRoute>} />
