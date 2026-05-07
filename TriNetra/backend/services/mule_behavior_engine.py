@@ -10,8 +10,7 @@ from config import Config
 from database.db_utils import fetch_account_transactions
 
 class MuleBehaviorEngine:
-    """
-    Mule Behavioral Profiling Engine
+    """Mule Behavioral Profiling Engine
     Analyzes account behavior patterns to detect money mule activity
     """
     
